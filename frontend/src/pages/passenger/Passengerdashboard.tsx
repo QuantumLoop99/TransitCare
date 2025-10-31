@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Plus, FileText, Clock, CheckCircle, AlertTriangle } from 'lucide-react';
 import { Card, CardHeader, CardContent } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
-import { StatCard } from '../../components/dashbord/StatCard';
+import { StatCard } from '../../components/dashboard/StatCard';
 import { ComplaintList } from '../../components/complaints/ComplaintList';
 import { apiClient } from '../../lib/api';
 import { Complaint } from '../../types';

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Users, FileText, UserCheck, TrendingUp, Clock, CheckCircle } from 'lucide-react';
 import { Card, CardHeader, CardContent } from '../../components/ui/Card';
-import { StatCard } from '../../components/dashbord/StatCard';
+import { StatCard } from '../../components/dashboard/StatCard';
 import { ComplaintList } from '../../components/complaints/ComplaintList';
 import { apiClient } from '../../lib/api';
 import { Complaint, DashboardStats } from '../../types';
