@@ -22,12 +22,14 @@ function App() {
   const { signOut } = useAuth();
   const [localUser, setLocalUser] = useState<LocalUser | null>(null);
   const [loading, setLoading] = useState(false);
+  const [onboardError, setOnboardError] = useState<string | null>(null);
 
   useEffect(() => {
     // When Clerk reports a signed-in user, call backend to onboard (upsert) and fetch local role
     async function onboard() {
       if (!isSignedIn || !user) return;
       setLoading(true);
+      setOnboardError(null);
       try {
         const payload = {
           clerkId: user.id,
@@ -42,6 +44,8 @@ function App() {
         }
       } catch (err) {
         console.error('Onboard failed', err);
+        const msg = err instanceof Error ? err.message : 'Unknown error';
+        setOnboardError(`Failed to load profile: ${msg}`);
       } finally {
         setLoading(false);
       }
@@ -93,7 +97,19 @@ function App() {
             </Layout>
           ) : (
             <div className="flex items-center justify-center min-h-screen">
-              <p className="text-gray-600">Loading user profile...</p>
+              {onboardError ? (
+                <div className="text-center">
+                  <p className="text-red-600 mb-4">{onboardError}</p>
+                  <button
+                    onClick={() => window.location.reload()}
+                    className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                  >
+                    Retry
+                  </button>
+                </div>
+              ) : (
+                <p className="text-gray-600">Loading user profile...</p>
+              )}
             </div>
           )
         ) : (

@@ -7,24 +7,52 @@
 
 import express, { json, urlencoded } from 'express';
 import cors from 'cors';
-import { connect, Schema, model as _model } from 'mongoose';
+import mongoose from 'mongoose';
+const { connect, Schema, model, connection: mongooseConnection } = mongoose;
 import jwt from 'jsonwebtoken';
 import OpenAI from 'openai';
 import fetch from 'node-fetch';
 import 'dotenv/config';
 
+
+
 const app = express();
 const PORT = process.env.PORT || 3001;
+
+// Prevent crashes from unhandled promise rejections/exceptions in dev
+process.on('unhandledRejection', (reason) => {
+  console.warn('Unhandled promise rejection (suppressed):', reason instanceof Error ? reason.message : reason);
+});
+process.on('uncaughtException', (err) => {
+  console.warn('Uncaught exception (suppressed):', err?.message || err);
+});
 
 // Middleware
 app.use(cors());
 app.use(json({ limit: '10mb' }));
 app.use(urlencoded({ extended: true }));
 
-// MongoDB Connection
-connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/transitcare', {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
+// MongoDB Connection (safe)
+const MONGO_URI = process.env.MONGODB_URI;
+(async () => {
+  if (!MONGO_URI) {
+    console.warn('MONGODB_URI not set; running without a database. Some endpoints will be limited.');
+    return;
+  }
+  try {
+    await connect(MONGO_URI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+      serverSelectionTimeoutMS: 2000,
+    });
+    console.log('Connected to MongoDB');
+  } catch (err) {
+    console.warn('MongoDB connection failed:', err?.message || err);
+    console.warn('Continuing to run API without DB. Endpoints that require DB will be limited.');
+  }
+})();
+mongooseConnection.on('error', (err) => {
+  console.warn('MongoDB connection error (non-fatal):', err?.message || err);
 });
 
 // OpenAI Configuration (optional)
@@ -76,8 +104,16 @@ const userSchema = new Schema({
   timestamps: true,
 });
 
-const Complaint = _model('Complaint', complaintSchema);
-const User = _model('User', userSchema);
+const Complaint = model('Complaint', complaintSchema);
+const User = model('User', userSchema);
+
+// In-memory fallback for dev when DB is unavailable
+const memory = {
+  users: new Map(), // key: clerkId
+};
+function isDbConnected() {
+  return mongooseConnection && mongooseConnection.readyState === 1;
+}
 
 // AI Prioritization Function
 async function prioritizeComplaint(complaint) {
@@ -290,8 +326,11 @@ app.get('/api/dashboard/stats', async (req, res) => {
 // Users
 app.get('/api/users', async (req, res) => {
   try {
+    if (!isDbConnected()) {
+      return res.json({ success: true, data: Array.from(memory.users.values()), meta: { storage: 'memory' } });
+    }
     const users = await User.find().select('-__v');
-    res.json({ success: true, data: users });
+    res.json({ success: true, data: users, meta: { storage: 'db' } });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
@@ -299,9 +338,24 @@ app.get('/api/users', async (req, res) => {
 
 app.post('/api/users', async (req, res) => {
   try {
+    if (!isDbConnected()) {
+      const body = req.body || {};
+      const doc = {
+        _id: 'mem-' + Date.now(),
+        email: body.email,
+        firstName: body.firstName,
+        lastName: body.lastName,
+        role: body.role || 'passenger',
+        clerkId: body.clerkId,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      if (doc.clerkId) memory.users.set(doc.clerkId, doc);
+      return res.json({ success: true, data: doc, meta: { storage: 'memory' } });
+    }
     const user = new User(req.body);
     await user.save();
-    res.json({ success: true, data: user });
+    res.json({ success: true, data: user, meta: { storage: 'db' } });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
@@ -315,13 +369,29 @@ app.post('/api/users/onboard', async (req, res) => {
       return res.status(400).json({ success: false, error: 'Missing clerkId or email' });
     }
 
+    if (!isDbConnected()) {
+      const existing = memory.users.get(clerkId);
+      const updated = {
+        _id: existing?._id || ('mem-' + Date.now()),
+        clerkId,
+        email,
+        firstName,
+        lastName,
+        role: existing?.role || 'passenger',
+        createdAt: existing?.createdAt || new Date(),
+        updatedAt: new Date(),
+      };
+      memory.users.set(clerkId, updated);
+      return res.json({ success: true, data: updated, meta: { storage: 'memory' } });
+    }
+
     const user = await User.findOneAndUpdate(
       { clerkId },
       { $set: { email, firstName, lastName }, $setOnInsert: { role: 'passenger', clerkId } },
       { upsert: true, new: true }
     );
 
-    res.json({ success: true, data: user });
+    res.json({ success: true, data: user, meta: { storage: 'db' } });
   } catch (error) {
     console.error('Onboard error', error);
     res.status(500).json({ success: false, error: error.message });
@@ -444,6 +514,7 @@ app.get('/api/health', (req, res) => {
   res.json({ 
     success: true, 
     message: 'TransitCare API is running',
+    dbConnected: isDbConnected(),
     timestamp: new Date().toISOString()
   });
 });
