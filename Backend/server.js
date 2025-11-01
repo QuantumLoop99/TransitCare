@@ -10,7 +10,8 @@ import cors from 'cors';
 import { connect, Schema, model as _model } from 'mongoose';
 import jwt from 'jsonwebtoken';
 import OpenAI from 'openai';
-require('dotenv').config();
+import fetch from 'node-fetch';
+import 'dotenv/config';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -26,10 +27,18 @@ connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/transitcare', {
   useUnifiedTopology: true,
 });
 
-// OpenAI Configuration
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+// OpenAI Configuration (optional)
+let openai = null;
+if (process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY !== 'sk-your_openai_api_key') {
+  try {
+    openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  } catch (err) {
+    console.warn('Failed to initialize OpenAI client:', err.message);
+    openai = null;
+  }
+} else {
+  console.warn('OPENAI_API_KEY not set or is placeholder; AI features disabled.');
+}
 
 // Models
 const complaintSchema = new Schema({
@@ -100,6 +109,16 @@ async function prioritizeComplaint(complaint) {
   `;
 
   try {
+    if (!openai) {
+      // OpenAI not configured; return a safe default analysis
+      return {
+        priority: 'medium',
+        reasoning: 'AI disabled or misconfigured, defaulting to medium',
+        sentiment: 0,
+        confidence: 0,
+      };
+    }
+
     const completion = await openai.chat.completions.create({
       model: "gpt-3.5-turbo",
       messages: [
@@ -288,6 +307,98 @@ app.post('/api/users', async (req, res) => {
   }
 });
 
+// Onboard endpoint: called after a Clerk sign-in/sign-up to upsert local user
+app.post('/api/users/onboard', async (req, res) => {
+  try {
+    const { clerkId, email, firstName, lastName } = req.body;
+    if (!clerkId || !email) {
+      return res.status(400).json({ success: false, error: 'Missing clerkId or email' });
+    }
+
+    const user = await User.findOneAndUpdate(
+      { clerkId },
+      { $set: { email, firstName, lastName }, $setOnInsert: { role: 'passenger', clerkId } },
+      { upsert: true, new: true }
+    );
+
+    res.json({ success: true, data: user });
+  } catch (error) {
+    console.error('Onboard error', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Admin middleware: simple check using ADMIN_SECRET header for dev/testing.
+function requireAdmin(req, res, next) {
+  try {
+    const adminSecret = req.header('x-admin-secret');
+    if (adminSecret && process.env.ADMIN_SECRET && adminSecret === process.env.ADMIN_SECRET) {
+      return next();
+    }
+
+    return res.status(403).json({ success: false, error: 'Unauthorized: missing or invalid admin secret' });
+  } catch (error) {
+    console.error('requireAdmin error', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+}
+
+// Admin: create a Clerk user and local user (invite flow)
+app.post('/api/admin/create-user', requireAdmin, async (req, res) => {
+  try {
+    const { email, firstName, lastName, role } = req.body;
+    if (!email || !role) return res.status(400).json({ success: false, error: 'Missing fields' });
+
+    if (!process.env.CLERK_API_KEY) {
+      return res.status(500).json({ success: false, error: 'Server not configured with CLERK_API_KEY' });
+    }
+
+    // Create Clerk user via Clerk REST API
+    const clerkResp = await fetch('https://api.clerk.com/v1/users', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.CLERK_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        email_addresses: [{ email_address: email }],
+        first_name: firstName,
+        last_name: lastName,
+      })
+    });
+
+    if (!clerkResp.ok) {
+      const text = await clerkResp.text();
+      console.error('Clerk API error', clerkResp.status, text);
+      return res.status(500).json({ success: false, error: 'Clerk API error' });
+    }
+
+    const clerkUser = await clerkResp.json();
+    const clerkId = clerkUser.id || clerkUser?.user?.id;
+
+    if (!clerkId) {
+      console.error('Unexpected Clerk response', clerkUser);
+      return res.status(500).json({ success: false, error: 'Invalid Clerk response' });
+    }
+
+    const localUser = new User({
+      email,
+      firstName,
+      lastName,
+      role,
+      clerkId,
+    });
+
+    await localUser.save();
+
+    res.json({ success: true, data: { localUser, clerkUser } });
+  } catch (error) {
+    console.error('create-user error', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+
 // Reports
 app.get('/api/reports/:type', async (req, res) => {
   try {
@@ -348,7 +459,7 @@ app.use((err, req, res, next) => {
 });
 
 // 404 handler
-app.use('*', (req, res) => {
+app.use((req, res) => {
   res.status(404).json({
     success: false,
     error: 'Endpoint not found'

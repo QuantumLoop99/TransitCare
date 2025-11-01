@@ -9,7 +9,7 @@ interface StatCardProps {
     value: number;
     type: 'increase' | 'decrease';
   };
-  icon: LucideIcon;
+  icon: typeof LucideIcon;
   color?: 'blue' | 'green' | 'yellow' | 'red' | 'gray';
 }
 
