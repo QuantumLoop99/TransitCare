@@ -1,81 +1,81 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import { ArrowRight, Shield, Zap, Users, BarChart3, Clock, CheckCircle } from 'lucide-react';
-import { Header } from '../components/layout/Header';
-import { Button } from '../components/ui/Button';
-import { Card, CardContent } from '../components/ui/Card';
+import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
+import { ArrowRight, Zap, Users, BarChart3, Shield, Clock, CheckCircle } from "lucide-react";
+import { Header } from "../components/layout/Header";
+import { Button } from "../components/ui/Button";
+import { Card, CardContent } from "../components/ui/Card";
+import Bus1 from "../assets/BG.jpg";
+import Bus2 from "../assets/BG1.jpg";
+import Bus3 from "../assets/BG2.jpg";
+import Bus4 from "../assets/BG3.png";
+import Passenger from "../assets/passenger.jpg";
+import Officer from "../assets/officer.jpg";
+import Admin from "../assets/admin.jpg";
+
 
 export const LandingPage: React.FC = () => {
+  const images = [Bus1, Bus2, Bus3, Bus4];
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  // Slide every 3 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % images.length);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Features data (unchanged)
   const features = [
-    {
-      icon: Zap,
-      title: 'AI-Powered Prioritization',
-      description: 'Automatic complaint prioritization using advanced AI to ensure urgent issues get immediate attention.',
-    },
-    {
-      icon: Users,
-      title: 'Role-Based Access',
-      description: 'Separate dashboards for passengers, transport officers, and administrators with appropriate permissions.',
-    },
-    {
-      icon: BarChart3,
-      title: 'Comprehensive Analytics',
-      description: 'Detailed reports and analytics to track complaint trends and resolution performance.',
-    },
-    {
-      icon: Shield,
-      title: 'Secure & Reliable',
-      description: 'Enterprise-grade security with data encryption and reliable cloud infrastructure.',
-    },
-    {
-      icon: Clock,
-      title: 'Real-time Updates',
-      description: 'Get instant notifications about complaint status changes and resolution updates.',
-    },
-    {
-      icon: CheckCircle,
-      title: 'Easy Resolution',
-      description: 'Streamlined workflow for transport officers to efficiently resolve complaints.',
-    },
+    { icon: Zap, title: "AI-Powered Prioritization", description: "Automatic complaint prioritization using advanced AI to ensure urgent issues get immediate attention." },
+    { icon: Users, title: "Role-Based Access", description: "Separate dashboards for passengers, transport officers, and administrators with appropriate permissions." },
+    { icon: BarChart3, title: "Comprehensive Analytics", description: "Detailed reports and analytics to track complaint trends and resolution performance." },
+    { icon: Shield, title: "Secure & Reliable", description: "Enterprise-grade security with data encryption and reliable cloud infrastructure." },
+    { icon: Clock, title: "Real-time Updates", description: "Get instant notifications about complaint status changes and resolution updates." },
+    { icon: CheckCircle, title: "Easy Resolution", description: "Streamlined workflow for transport officers to efficiently resolve complaints." },
   ];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       <Header />
-      {/* Hero Section */}
-      <div className="relative overflow-hidden">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-16">
-          <div className="text-center">
-            <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-8">
-              Transform Public Transport
-              <span className="block text-blue-600">Complaint Management</span>
-            </h1>
-            <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-              Streamline complaint processing with AI-powered prioritization, real-time tracking, 
-              and comprehensive analytics. Built for passengers, officers, and administrators.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to="/auth/sign-up">
-                <Button size="lg" className="w-full sm:w-auto">
-                  Get Started
-                  <ArrowRight className="ml-2 w-5 h-5" />
-                </Button>
-              </Link>
-              <Link to="/demo">
-                <Button variant="outline" size="lg" className="w-full sm:w-auto">
-                  View Demo
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </div>
 
-        {/* Background Pattern */}
-        <div className="absolute inset-0 -z-10">
-          <div className="absolute top-0 left-0 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-blue-200 rounded-full opacity-20 blur-3xl"></div>
-          <div className="absolute bottom-0 right-0 transform translate-x-1/2 translate-y-1/2 w-96 h-96 bg-indigo-200 rounded-full opacity-20 blur-3xl"></div>
+    {/* Hero Section */}
+    <div className="relative overflow-hidden h-[600px]">
+      {/* Sliding Images */}
+      <div
+        className="absolute inset-0 flex transition-transform duration-1000 ease-in-out"
+        style={{ transform: `translateX(-${currentIndex * 100}%)` }}
+      >
+        {images.map((img, idx) => (
+          <div
+            key={idx}
+            className="flex-shrink-0 w-full h-full bg-cover bg-center"
+            style={{ backgroundImage: `url(${img})` }}
+          ></div>
+        ))}
+      </div>
+
+      {/* Fixed overlay for text */}
+      <div className="absolute inset-0 bg-black bg-opacity-50"></div> {/* optional overlay */}
+
+      {/* Text stays fixed */}
+      <div className="relative z-10 flex flex-col items-center justify-center h-full text-center px-4">
+        <h1 className="text-4xl md:text-6xl font-bold text-white mb-4">
+          Transform Public Transport
+          <span className="block text-blue-400">Complaint Management</span>
+        </h1><br/>
+        <p className="text-xl text-gray-100 max-w-3xl mb-6">
+          Streamline complaint processing with AI-powered prioritization, real-time tracking,and comprehensive analytics. Built for passengers, officers, and administrators.
+        </p><br/>
+        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <Link to="/auth/sign-up">
+            <Button size="lg">
+              Get Started <ArrowRight className="ml-2 w-5 h-5" />
+            </Button>
+          </Link>
         </div>
       </div>
+    </div>
 
       {/* Features Section */}
       <div className="py-16 bg-white">
@@ -152,8 +152,8 @@ export const LandingPage: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <Card className="shadow-md border-blue-100 border-2">
               <CardContent className="p-6 flex flex-col items-center">
-                <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center mb-4">
-                  <Users className="w-8 h-8 text-blue-600" />
+                <div>
+                    <img src={Passenger} alt="Background" className="w-16 h-16 rounded-full flex items-center justify-center mb-4"/>
                 </div>
                 <p className="text-gray-700 italic mb-2">“Submitting complaints is so easy and I always know the status. The updates are instant!”</p><br/>
                 <span className="text-sm text-gray-500">- Mr.Perera, Passenger</span>
@@ -161,17 +161,17 @@ export const LandingPage: React.FC = () => {
             </Card>
             <Card className="shadow-md border-indigo-100 border-2">
               <CardContent className="p-6 flex flex-col items-center">
-                <div className="w-16 h-16 rounded-full bg-indigo-100 flex items-center justify-center mb-4">
-                  <Shield className="w-8 h-8 text-indigo-600" />
+                <div>
+                    <img src={Officer} alt="Background" className="w-16 h-16 rounded-full flex items-center justify-center mb-4"/>
                 </div>
                 <p className="text-gray-700 italic mb-2">“The AI prioritization helps me focus on the most urgent issues. My workflow is much smoother.”</p><br/>
-                <span className="text-sm text-gray-500">- Mrs.Kasuni,Transport Officer</span>
+                <span className="text-sm text-gray-500">- Mrs.Kasuni, Transport Officer</span>
               </CardContent>
             </Card>
             <Card className="shadow-md border-green-100 border-2">
               <CardContent className="p-6 flex flex-col items-center">
-                <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mb-4">
-                  <BarChart3 className="w-8 h-8 text-green-600" />
+                <div>
+                    <img src={Admin} alt="Background" className="w-16 h-16 rounded-full flex items-center justify-center mb-4"/>
                 </div>
                 <p className="text-gray-700 italic mb-2">“Analytics and reports give us the insights we need to improve our services.”</p><br/>
                 <span className="text-sm text-gray-500">- Mr.Dasanayake, Administrator</span>
@@ -192,13 +192,13 @@ export const LandingPage: React.FC = () => {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link to="/auth/sign-up">
-              <Button size="lg" variant="secondary" className="w-full sm:w-auto bg-white text-blue-600 hover:bg-gray-50">
-                Start Free Trial
+              <Button size="lg" className="w-full sm:w-auto border-white">
+                Get Started 
               </Button>
             </Link>
             <Link to="/contact">
-              <Button size="lg" variant="outline" className="w-full sm:w-auto border-white text-white hover:bg-blue-700">
-                Contact Sales
+              <Button size="lg" className="w-full sm:w-auto border-white">
+                Contact Us       
               </Button>
             </Link>
           </div>
