@@ -142,6 +142,45 @@ export const LandingPage: React.FC = () => {
         </div>
       </div>
 
+      {/* Testimonials Section */}
+      <div className="py-16 bg-white">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">What Our Users Say</h2>
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto">Hear from real users who have improved their complaint management with TransitCare.</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <Card className="shadow-md border-blue-100 border-2">
+              <CardContent className="p-6 flex flex-col items-center">
+                <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center mb-4">
+                  <Users className="w-8 h-8 text-blue-600" />
+                </div>
+                <p className="text-gray-700 italic mb-2">“Submitting complaints is so easy and I always know the status. The updates are instant!”</p><br/>
+                <span className="text-sm text-gray-500">- Mr.Perera, Passenger</span>
+              </CardContent>
+            </Card>
+            <Card className="shadow-md border-indigo-100 border-2">
+              <CardContent className="p-6 flex flex-col items-center">
+                <div className="w-16 h-16 rounded-full bg-indigo-100 flex items-center justify-center mb-4">
+                  <Shield className="w-8 h-8 text-indigo-600" />
+                </div>
+                <p className="text-gray-700 italic mb-2">“The AI prioritization helps me focus on the most urgent issues. My workflow is much smoother.”</p><br/>
+                <span className="text-sm text-gray-500">- Mrs.Kasuni,Transport Officer</span>
+              </CardContent>
+            </Card>
+            <Card className="shadow-md border-green-100 border-2">
+              <CardContent className="p-6 flex flex-col items-center">
+                <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mb-4">
+                  <BarChart3 className="w-8 h-8 text-green-600" />
+                </div>
+                <p className="text-gray-700 italic mb-2">“Analytics and reports give us the insights we need to improve our services.”</p><br/>
+                <span className="text-sm text-gray-500">- Mr.Dasanayake, Administrator</span>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+
       {/* CTA Section */}
       <div className="py-16 bg-blue-600">
         <div className="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
