@@ -202,7 +202,7 @@ export const UserManagement: React.FC = () => {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => navigate(`/admin/users/edit/${user.id}`)}
+                        onClick={() => navigate(`/admin/users/edit/${user._id}`)}
                         className="mr-2"
                       >
                         Edit
