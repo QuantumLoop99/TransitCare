@@ -282,5 +282,21 @@ router.post('/onboard', async (req, res) => {
     return res.status(500).json({ success: false, error: error.message || 'Unknown error' });
   }
 });
+// DELETE USER
+router.delete('/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ success: false, error: 'Invalid user ID' });
+    }
+    const deleted = await User.findByIdAndDelete(id);
+    if (!deleted) {
+      return res.status(404).json({ success: false, error: 'User not found' });
+    }
+    return res.json({ success: true, message: 'User deleted' });
+  } catch (error) {
+    return res.status(500).json({ success: false, error: error.message });
+  }
+});
 
 export default router;
