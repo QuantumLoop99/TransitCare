@@ -26,7 +26,9 @@ declare global {
 }
 
 if (!PUBLISHABLE_KEY) {
-  throw new Error('Add your Clerk Publishable Key to the .env file')
+  throw new Error(
+    'Missing VITE_CLERK_PUBLISHABLE_KEY. Create a .env at the project root and set:\nVITE_CLERK_PUBLISHABLE_KEY=pk_test_...'
+  );
 }
 
 
