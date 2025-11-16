@@ -163,21 +163,30 @@ export const AdminDashboard: React.FC = () => {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 gap-3">
-                <button className="flex items-center p-3 text-left rounded-lg hover:bg-gray-50 transition-colors">
+                <button 
+                  onClick={() => navigate('/admin/users')}
+                  className="flex items-center p-3 text-left rounded-lg hover:bg-gray-50 transition-colors"
+                >
                   <Users className="w-5 h-5 text-blue-600 mr-3" />
                   <div>
                     <div className="font-medium text-gray-900">Manage Users</div>
                     <div className="text-sm text-gray-500">Create officers and manage roles</div>
                   </div>
                 </button>
-                <button className="flex items-center p-3 text-left rounded-lg hover:bg-gray-50 transition-colors">
+                <button 
+                  onClick={() => navigate('/admin/reports')}
+                  className="flex items-center p-3 text-left rounded-lg hover:bg-gray-50 transition-colors"
+                >
                   <FileText className="w-5 h-5 text-green-600 mr-3" />
                   <div>
                     <div className="font-medium text-gray-900">View Reports</div>
                     <div className="text-sm text-gray-500">Generate detailed analytics</div>
                   </div>
                 </button>
-                <button className="flex items-center p-3 text-left rounded-lg hover:bg-gray-50 transition-colors">
+                <button 
+                  onClick={() => navigate('/admin/priority-rules')}
+                  className="flex items-center p-3 text-left rounded-lg hover:bg-gray-50 transition-colors"
+                >
                   <TrendingUp className="w-5 h-5 text-purple-600 mr-3" />
                   <div>
                     <div className="font-medium text-gray-900">AI Settings</div>
