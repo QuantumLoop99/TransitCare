@@ -7,6 +7,9 @@ import '../src/index.css';
 // Import your Publishable Key
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
+console.log("Frontend ENV KEY:", import.meta.env.VITE_CLERK_PUBLISHABLE_KEY);
+
+
 interface ImportMetaEnv {
   readonly VITE_CLERK_PUBLISHABLE_KEY: string;
   // add other env variables here if needed
