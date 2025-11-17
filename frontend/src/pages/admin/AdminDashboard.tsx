@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, FileText, UserCheck, TrendingUp, Clock, CheckCircle } from 'lucide-react';
+import { Users, FileText, TrendingUp, Clock, CheckCircle } from 'lucide-react';
 import { Card, CardHeader, CardContent } from '../../components/ui/Card';
 import { StatCard } from '../../components/dashboard/StatCard';
 import { ComplaintList } from '../../components/complaints/ComplaintList';
@@ -12,6 +12,15 @@ export const AdminDashboard: React.FC = () => {
   const [recentComplaints, setRecentComplaints] = useState<Complaint[]>([]);
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const totalComplaints = stats?.totalComplaints || 0;
+  const percentOfTotal = (count: number) => (totalComplaints ? Math.round((count / totalComplaints) * 100) : 0);
+  const pendingPct = percentOfTotal(stats?.pendingComplaints || 0);
+  const resolvedPct = percentOfTotal(stats?.resolvedComplaints || 0);
+  const highPriorityPct = percentOfTotal(stats?.priorityBreakdown?.high || 0);
+  const mediumPriorityPct = percentOfTotal(stats?.priorityBreakdown?.medium || 0);
+  const priorityBreakdown = stats?.priorityBreakdown || { high: 0, medium: 0, low: 0 };
+  const officerCount = stats?.totals?.registeredOfficers ?? stats?.activeOfficers ?? 0;
 
   useEffect(() => {
     fetchDashboardData();
@@ -60,44 +69,44 @@ export const AdminDashboard: React.FC = () => {
           value={stats?.totalComplaints || 0}
           icon={FileText}
           color="blue"
-          change={{ value: 12, type: 'increase' }}
         />
         <StatCard
           title="Pending"
           value={stats?.pendingComplaints || 0}
           icon={Clock}
           color="yellow"
+          change={totalComplaints ? { value: pendingPct, type: 'increase' } : undefined}
         />
         <StatCard
           title="Resolved"
           value={stats?.resolvedComplaints || 0}
           icon={CheckCircle}
           color="green"
-          change={{ value: 8, type: 'increase' }}
+          change={totalComplaints ? { value: resolvedPct, type: 'increase' } : undefined}
         />
         <StatCard
           title="High Priority"
-          value={stats?.priorityBreakdown?.high || 0}
+          value={priorityBreakdown.high}
           icon={TrendingUp}
           color="red"
+          change={totalComplaints ? { value: highPriorityPct, type: 'increase' } : undefined}
         />
         <StatCard
-          title="Active Officers"
-          value="24"
-          icon={UserCheck}
+          title="Moderate"
+          value={priorityBreakdown.medium}
+          icon={TrendingUp}
+          color="yellow"
+          change={totalComplaints ? { value: mediumPriorityPct, type: 'increase' } : undefined}
+        />
+        <StatCard
+          title="Officers"
+          value={officerCount}
+          icon={Users}
           color="blue"
-        />
-        <StatCard
-          title="Avg Resolution"
-          value={`${stats?.averageResolutionTime || 0}h`}
-          icon={Clock}
-          color="gray"
-          change={{ value: 5, type: 'decrease' }}
         />
       </div>
 
       {/* Priority Breakdown */}
-      {stats && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card>
             <CardHeader>
@@ -112,13 +121,11 @@ export const AdminDashboard: React.FC = () => {
                       <div
                         className="bg-red-600 h-2 rounded-full"
                         style={{
-                          width: `${
-                            (stats.priorityBreakdown.high / stats.totalComplaints) * 100
-                          }%`,
+                          width: `${totalComplaints ? (priorityBreakdown.high / totalComplaints) * 100 : 0}%`,
                         }}
                       ></div>
                     </div>
-                    <span className="text-sm text-gray-600">{stats.priorityBreakdown.high}</span>
+                    <span className="text-sm text-gray-600">{priorityBreakdown.high}</span>
                   </div>
                 </div>
                 <div className="flex items-center justify-between">
@@ -128,13 +135,11 @@ export const AdminDashboard: React.FC = () => {
                       <div
                         className="bg-yellow-500 h-2 rounded-full"
                         style={{
-                          width: `${
-                            (stats.priorityBreakdown.medium / stats.totalComplaints) * 100
-                          }%`,
+                          width: `${totalComplaints ? (priorityBreakdown.medium / totalComplaints) * 100 : 0}%`,
                         }}
                       ></div>
                     </div>
-                    <span className="text-sm text-gray-600">{stats.priorityBreakdown.medium}</span>
+                    <span className="text-sm text-gray-600">{priorityBreakdown.medium}</span>
                   </div>
                 </div>
                 <div className="flex items-center justify-between">
@@ -144,13 +149,11 @@ export const AdminDashboard: React.FC = () => {
                       <div
                         className="bg-green-500 h-2 rounded-full"
                         style={{
-                          width: `${
-                            (stats.priorityBreakdown.low / stats.totalComplaints) * 100
-                          }%`,
+                          width: `${totalComplaints ? (priorityBreakdown.low / totalComplaints) * 100 : 0}%`,
                         }}
                       ></div>
                     </div>
-                    <span className="text-sm text-gray-600">{stats.priorityBreakdown.low}</span>
+                    <span className="text-sm text-gray-600">{priorityBreakdown.low}</span>
                   </div>
                 </div>
               </div>
@@ -197,7 +200,6 @@ export const AdminDashboard: React.FC = () => {
             </CardContent>
           </Card>
         </div>
-      )}
 
       {/* Recent Complaints */}
       <div>
