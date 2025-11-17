@@ -84,11 +84,11 @@ getComplaintFeedback(complaintId: string) {
     return this.request<User>(`/users/${id}`);
   }
 
-  createUser(data: Omit<User, '_id' | 'createdAt' | 'updatedAt'>) {
+  createUser(data: Omit<User, 'id' | '_id' | 'createdAt' | 'updatedAt'>) {
     return this.request<User>('/users', { method: 'POST', body: JSON.stringify(data) });
   }
 
-  updateUser(id: string, data: Partial<User>) {
+  updateUser(id: string, data: Partial<Omit<User, 'id' | '_id' | 'createdAt' | 'updatedAt'>>) {
     return this.request<User>(`/users/${id}`, { method: 'PUT', body: JSON.stringify(data) });
   }
 

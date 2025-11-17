@@ -287,20 +287,24 @@ export const ComplaintManagement: React.FC = () => {
                 >
                   View Details
                 </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleReassign(complaint._id)}
-                >
-                  Assign
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleEscalate(complaint._id)}
-                >
-                  Escalate
-                </Button>
+                {complaint.status !== 'resolved' && (
+                  <>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleReassign(complaint._id)}
+                    >
+                      Assign
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleEscalate(complaint._id)}
+                    >
+                      Escalate
+                    </Button>
+                  </>
+                )}
               </div>
             </Card>
           ))}
