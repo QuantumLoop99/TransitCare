@@ -4,6 +4,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { Layout } from './components/layout/Layout';
 import { LandingPage } from './pages/LandingPage';
 import { PassengerDashboard } from './pages/passenger/PassengerDashboard';
+import { Profile } from './pages/passenger/Profile';
 import { NewComplaint } from './pages/passenger/NewComplaint';
 import { AdminDashboard } from './pages/admin/AdminDashboard';
 import { fetchOnboardUser } from './lib/onboard';
@@ -70,6 +71,7 @@ function App() {
                 {/* Passenger Routes */}
                 <Route path="/passenger/dashboard" element={<PassengerDashboard />} />
                 <Route path="/passenger/complaints/new" element={<NewComplaint />} />
+                <Route path="/passenger/profile" element={<Profile />} />
 
                 {/* Admin Routes */}
                 <Route path="/admin/dashboard" element={<AdminDashboard />} />

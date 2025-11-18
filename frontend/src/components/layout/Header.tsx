@@ -1,4 +1,5 @@
 import React from 'react';
+import { useUser as useClerkUser } from '@clerk/clerk-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Bus, LogOut, Settings, User } from 'lucide-react';
 import { Button } from '../ui/Button';
@@ -15,6 +16,7 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({ user, onSignOut }) => {
   const navigate = useNavigate();
+  const { user: clerkUser } = useClerkUser();
 
   const handleSignOut = () => {
     onSignOut?.();
@@ -111,8 +113,16 @@ export const Header: React.FC<HeaderProps> = ({ user, onSignOut }) => {
             {user ? (
               <div className="flex items-center space-x-2">
                 <div className="flex items-center space-x-2">
-                  <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                    <User className="w-4 h-4 text-blue-600" />
+                  <div className="w-8 h-8 bg-blue-100 rounded-full overflow-hidden flex items-center justify-center">
+                    {clerkUser?.imageUrl ? (
+                      <img
+                        src={clerkUser.imageUrl}
+                        alt="Avatar"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <User className="w-4 h-4 text-blue-600" />
+                    )}
                   </div>
                   <div className="hidden sm:block">
                     <p className="text-sm font-medium text-gray-900 dark:text-white">
