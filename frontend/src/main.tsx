@@ -7,9 +7,6 @@ import '../src/index.css';
 // Import your Publishable Key
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
-console.log("Frontend ENV KEY:", import.meta.env.VITE_CLERK_PUBLISHABLE_KEY);
-
-
 interface ImportMetaEnv {
   readonly VITE_CLERK_PUBLISHABLE_KEY: string;
   // add other env variables here if needed
@@ -26,9 +23,7 @@ declare global {
 }
 
 if (!PUBLISHABLE_KEY) {
-  throw new Error(
-    'Missing VITE_CLERK_PUBLISHABLE_KEY. Create a .env at the project root and set:\nVITE_CLERK_PUBLISHABLE_KEY=pk_test_...'
-  );
+  throw new Error('Add your Clerk Publishable Key to the .env file')
 }
 
 
