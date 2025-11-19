@@ -2,121 +2,135 @@ import React, { useState, useEffect } from 'react';
 import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
+import { apiClient } from '../../lib/api';
+import { useNavigate } from 'react-router-dom';
 
 interface Notification {
-  id: string;
-  type: 'info' | 'success' | 'warning' | 'error';
+  _id: string;
+  userId: string;
+  complaintId: { _id: string; title: string; status: string } | string;
+  type: 'status_change' | 'new_message' | 'resolved';
   title: string;
   message: string;
-  timestamp: string;
-  read: boolean;
-  relatedComplaintId?: string;
+  isRead: boolean;
+  metadata?: {
+    oldStatus?: string;
+    newStatus?: string;
+    senderName?: string;
+    senderRole?: string;
+  };
+  createdAt: string;
+  updatedAt: string;
 }
 
 export const Notifications: React.FC = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [filter, setFilter] = useState<'all' | 'unread'>('all');
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    // TODO: Fetch notifications from API
     const fetchNotifications = async () => {
       setLoading(true);
-      // Simulated data
-      setTimeout(() => {
-        setNotifications([
-          {
-            id: '1',
-            type: 'success',
-            title: 'Complaint Resolved',
-            message: 'Your complaint #1234 "Broken AC in Bus #1234" has been resolved.',
-            timestamp: '2025-12-11T10:00:00',
-            read: false,
-            relatedComplaintId: '1234'
-          },
-          {
-            id: '2',
-            type: 'info',
-            title: 'Status Update',
-            message: 'Your complaint #1235 is now in progress.',
-            timestamp: '2025-12-10T15:30:00',
-            read: false,
-            relatedComplaintId: '1235'
-          },
-          {
-            id: '3',
-            type: 'warning',
-            title: 'Additional Information Required',
-            message: 'Please provide more details about complaint #1236.',
-            timestamp: '2025-12-09T12:00:00',
-            read: true,
-            relatedComplaintId: '1236'
-          },
-          {
-            id: '4',
-            type: 'info',
-            title: 'New Message',
-            message: 'You have a new message from the transport representative.',
-            timestamp: '2025-12-08T09:15:00',
-            read: true
-          }
-        ]);
+      setError(null);
+      
+      const userEmail = localStorage.getItem('userEmail');
+      if (!userEmail) {
+        setError('User email not found. Please log in again.');
         setLoading(false);
-      }, 1000);
+        return;
+      }
+
+      try {
+        const response = await apiClient.getNotifications(userEmail, false);
+        if (response.success && response.data) {
+          setNotifications(response.data);
+        } else {
+          setError(response.error || 'Failed to fetch notifications');
+        }
+      } catch (err) {
+        console.error('Error fetching notifications:', err);
+        setError('Failed to load notifications');
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetchNotifications();
+    
+    // Poll for new notifications every 30 seconds
+    const interval = setInterval(fetchNotifications, 30000);
+    return () => clearInterval(interval);
   }, []);
 
   const filteredNotifications = filter === 'all' 
     ? notifications 
-    : notifications.filter(n => !n.read);
+    : notifications.filter(n => !n.isRead);
 
-  const unreadCount = notifications.filter(n => !n.read).length;
+  const unreadCount = notifications.filter(n => !n.isRead).length;
 
-  const markAsRead = (id: string) => {
-    setNotifications(notifications.map(n => 
-      n.id === id ? { ...n, read: true } : n
-    ));
-    // TODO: Update read status in API
+  const markAsRead = async (id: string) => {
+    try {
+      const response = await apiClient.markNotificationAsRead(id);
+      if (response.success) {
+        setNotifications(notifications.map(n => 
+          n._id === id ? { ...n, isRead: true } : n
+        ));
+      }
+    } catch (err) {
+      console.error('Error marking notification as read:', err);
+    }
   };
 
-  const markAllAsRead = () => {
-    setNotifications(notifications.map(n => ({ ...n, read: true })));
-    // TODO: Update all read status in API
+  const markAllAsRead = async () => {
+    const userEmail = localStorage.getItem('userEmail');
+    if (!userEmail) return;
+    
+    try {
+      const response = await apiClient.markAllNotificationsAsRead(userEmail);
+      if (response.success) {
+        setNotifications(notifications.map(n => ({ ...n, isRead: true })));
+      }
+    } catch (err) {
+      console.error('Error marking all notifications as read:', err);
+    }
   };
 
-  const deleteNotification = (id: string) => {
-    setNotifications(notifications.filter(n => n.id !== id));
-    // TODO: Delete notification in API
+  const handleNotificationClick = (notification: Notification) => {
+    const complaintId = typeof notification.complaintId === 'string' 
+      ? notification.complaintId 
+      : notification.complaintId._id;
+    
+    if (!notification.isRead) {
+      markAsRead(notification._id);
+    }
+    navigate(`/passenger/complaints/${complaintId}`);
   };
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
-      case 'success': return '✓';
-      case 'info': return 'ℹ';
-      case 'warning': return '⚠';
-      case 'error': return '✕';
+      case 'resolved': return '✓';
+      case 'status_change': return 'ℹ';
+      case 'new_message': return '💬';
       default: return '•';
     }
   };
 
   const getNotificationColor = (type: string) => {
     switch (type) {
-      case 'success': return 'bg-green-100 dark:bg-green-900 border-green-400 dark:border-green-700';
-      case 'info': return 'bg-blue-100 dark:bg-blue-900 border-blue-400 dark:border-blue-700';
-      case 'warning': return 'bg-yellow-100 dark:bg-yellow-900 border-yellow-400 dark:border-yellow-700';
-      case 'error': return 'bg-red-100 dark:bg-red-900 border-red-400 dark:border-red-700';
+      case 'resolved': return 'bg-green-100 dark:bg-green-900 border-green-400 dark:border-green-700';
+      case 'status_change': return 'bg-blue-100 dark:bg-blue-900 border-blue-400 dark:border-blue-700';
+      case 'new_message': return 'bg-purple-100 dark:bg-purple-900 border-purple-400 dark:border-purple-700';
       default: return 'bg-gray-100 dark:bg-gray-800 border-gray-400 dark:border-gray-700';
     }
   };
 
   const getIconColor = (type: string) => {
     switch (type) {
-      case 'success': return 'text-green-600 dark:text-green-400';
-      case 'info': return 'text-blue-600 dark:text-blue-400';
-      case 'warning': return 'text-yellow-600 dark:text-yellow-400';
-      case 'error': return 'text-red-600 dark:text-red-400';
+      case 'resolved': return 'text-green-600 dark:text-green-400';
+      case 'status_change': return 'text-blue-600 dark:text-blue-400';
+      case 'new_message': return 'text-purple-600 dark:text-purple-400';
       default: return 'text-gray-600 dark:text-gray-400';
     }
   };
@@ -162,6 +176,12 @@ export const Notifications: React.FC = () => {
       </div>
 
       {/* Notifications List */}
+      {error && (
+        <Card className="p-4 bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800">
+          <p className="text-red-600 dark:text-red-400">{error}</p>
+        </Card>
+      )}
+      
       {loading ? (
         <div className="text-center py-12">
           <p className="text-gray-600 dark:text-gray-400">Loading notifications...</p>
@@ -182,10 +202,11 @@ export const Notifications: React.FC = () => {
         <div className="space-y-4">
           {filteredNotifications.map((notification) => (
             <Card
-              key={notification.id}
+              key={notification._id}
               className={`p-4 border-l-4 ${getNotificationColor(notification.type)} ${
-                !notification.read ? 'bg-opacity-50' : ''
-              }`}
+                !notification.isRead ? 'bg-opacity-50' : ''
+              } cursor-pointer hover:shadow-lg transition-shadow`}
+              onClick={() => handleNotificationClick(notification)}
             >
               <div className="flex items-start justify-between">
                 <div className="flex items-start flex-1">
@@ -197,33 +218,35 @@ export const Notifications: React.FC = () => {
                       <h3 className="font-bold text-gray-900 dark:text-white">
                         {notification.title}
                       </h3>
-                      {!notification.read && (
+                      {!notification.isRead && (
                         <Badge variant="info" className="text-xs">NEW</Badge>
                       )}
                     </div>
                     <p className="text-gray-700 dark:text-gray-300 mb-2">
                       {notification.message}
                     </p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      {new Date(notification.timestamp).toLocaleString()}
-                    </p>
+                    <div className="flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400">
+                      <span>{new Date(notification.createdAt).toLocaleString()}</span>
+                      {typeof notification.complaintId === 'object' && (
+                        <span className="text-blue-600 dark:text-blue-400">
+                          Complaint: {notification.complaintId.title}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
                 <div className="flex flex-col space-y-2 ml-4">
-                  {!notification.read && (
+                  {!notification.isRead && (
                     <button
-                      onClick={() => markAsRead(notification.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        markAsRead(notification._id);
+                      }}
                       className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
                     >
                       Mark as read
                     </button>
                   )}
-                  <button
-                    onClick={() => deleteNotification(notification.id)}
-                    className="text-sm text-red-600 dark:text-red-400 hover:underline"
-                  >
-                    Delete
-                  </button>
                 </div>
               </div>
             </Card>

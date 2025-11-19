@@ -102,6 +102,24 @@ class ApiClient {
     const q = params ? `?${new URLSearchParams(params).toString()}` : '';
     return this.request<any>(`/reports/${type}${q}`);
   }
+
+  // 🔹 Notifications
+  getNotifications(userEmail: string, unreadOnly?: boolean) {
+    const params = new URLSearchParams({ userEmail });
+    if (unreadOnly) params.append('unreadOnly', 'true');
+    return this.request<any[]>(`/notifications?${params.toString()}`);
+  }
+
+  markNotificationAsRead(id: string) {
+    return this.request<any>(`/notifications/${id}/read`, { method: 'PATCH' });
+  }
+
+  markAllNotificationsAsRead(userEmail: string) {
+    return this.request<any>('/notifications/mark-all-read', {
+      method: 'PATCH',
+      body: JSON.stringify({ userEmail }),
+    });
+  }
 }
 
 export const apiClient = new ApiClient();
