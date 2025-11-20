@@ -306,58 +306,74 @@ export const Notifications: React.FC = () => {
                   <p className="text-gray-700 dark:text-gray-300">{(detailsData as ComplaintDetails)?.description}</p>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4 border-t border-gray-200 dark:border-gray-700 pt-4">
-                  {(detailsData as ComplaintDetails)?.vehicleNumber && (
-                    <div>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">Vehicle Number</p>
-                      <p className="font-medium text-gray-900 dark:text-white">{(detailsData as ComplaintDetails).vehicleNumber}</p>
+                {selectedNotification.type === 'resolved' ? (
+                  // For resolved notifications - show only resolution info
+                  <>
+                    <div className="grid grid-cols-2 gap-4 border-t border-gray-200 dark:border-gray-700 pt-4">
+                      <div>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">Submitted On</p>
+                        <p className="font-medium text-gray-900 dark:text-white">
+                          {new Date((detailsData as ComplaintDetails)?.createdAt).toLocaleString()}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">Category</p>
+                        <p className="font-medium text-gray-900 dark:text-white">
+                          {(detailsData as ComplaintDetails)?.category}
+                        </p>
+                      </div>
                     </div>
-                  )}
-                  {(detailsData as ComplaintDetails)?.route && (
-                    <div>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">Route</p>
-                      <p className="font-medium text-gray-900 dark:text-white">{(detailsData as ComplaintDetails).route}</p>
-                    </div>
-                  )}
-                  {(detailsData as ComplaintDetails)?.location && (
-                    <div>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">Location</p>
-                      <p className="font-medium text-gray-900 dark:text-white">{(detailsData as ComplaintDetails).location}</p>
-                    </div>
-                  )}
-                  <div>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Date & Time</p>
-                    <p className="font-medium text-gray-900 dark:text-white">
-                      {new Date((detailsData as ComplaintDetails)?.dateTime).toLocaleString()}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Submitted On</p>
-                    <p className="font-medium text-gray-900 dark:text-white">
-                      {new Date((detailsData as ComplaintDetails)?.createdAt).toLocaleString()}
-                    </p>
-                  </div>
-                  {(detailsData as ComplaintDetails)?.assignedTo && (
-                    <div>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">Assigned To</p>
-                      <p className="font-medium text-gray-900 dark:text-white">
-                        {(detailsData as ComplaintDetails).assignedTo.firstName} {(detailsData as ComplaintDetails).assignedTo.lastName}
-                      </p>
-                    </div>
-                  )}
-                </div>
 
-                {(detailsData as ComplaintDetails)?.resolution && (
-                  <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
-                    <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Resolution</h3>
-                    <p className="text-gray-700 dark:text-gray-300">{(detailsData as ComplaintDetails).resolution}</p>
-                    {(detailsData as ComplaintDetails).resolutionNotes && (
-                      <div className="mt-2">
-                        <p className="text-sm text-gray-500 dark:text-gray-400">Notes:</p>
-                        <p className="text-gray-700 dark:text-gray-300">{(detailsData as ComplaintDetails).resolutionNotes}</p>
+                    {(detailsData as ComplaintDetails)?.resolution && (
+                      <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+                        <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Resolution</h3>
+                        <p className="text-gray-700 dark:text-gray-300 mb-4">{(detailsData as ComplaintDetails).resolution}</p>
+                        
+                        {(detailsData as ComplaintDetails).resolutionNotes && (
+                          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mt-3">
+                            <p className="text-sm font-semibold text-blue-900 dark:text-blue-300 mb-2">Resolution Notes:</p>
+                            <p className="text-gray-700 dark:text-gray-300">{(detailsData as ComplaintDetails).resolutionNotes}</p>
+                          </div>
+                        )}
                       </div>
                     )}
-                  </div>
+                  </>
+                ) : (
+                  // For status_change notifications - show full complaint details
+                  <>
+                    <div className="grid grid-cols-2 gap-4 border-t border-gray-200 dark:border-gray-700 pt-4">
+                      {(detailsData as ComplaintDetails)?.vehicleNumber && (
+                        <div>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">Vehicle Number</p>
+                          <p className="font-medium text-gray-900 dark:text-white">{(detailsData as ComplaintDetails).vehicleNumber}</p>
+                        </div>
+                      )}
+                      {(detailsData as ComplaintDetails)?.route && (
+                        <div>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">Route</p>
+                          <p className="font-medium text-gray-900 dark:text-white">{(detailsData as ComplaintDetails).route}</p>
+                        </div>
+                      )}
+                      {(detailsData as ComplaintDetails)?.location && (
+                        <div>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">Location</p>
+                          <p className="font-medium text-gray-900 dark:text-white">{(detailsData as ComplaintDetails).location}</p>
+                        </div>
+                      )}
+                      <div>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">Date & Time</p>
+                        <p className="font-medium text-gray-900 dark:text-white">
+                          {new Date((detailsData as ComplaintDetails)?.dateTime).toLocaleString()}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">Submitted On</p>
+                        <p className="font-medium text-gray-900 dark:text-white">
+                          {new Date((detailsData as ComplaintDetails)?.createdAt).toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
+                  </>
                 )}
               </div>
             </Card>
