@@ -3,7 +3,6 @@ import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 import { apiClient } from '../../lib/api';
-import { useNavigate } from 'react-router-dom';
 
 interface Notification {
   _id: string;
@@ -23,12 +22,40 @@ interface Notification {
   updatedAt: string;
 }
 
+interface ComplaintDetails {
+  _id: string;
+  title: string;
+  description: string;
+  category: string;
+  priority: string;
+  status: string;
+  vehicleNumber?: string;
+  route?: string;
+  dateTime: string;
+  location?: string;
+  submittedBy: string | { _id: string; firstName?: string; lastName?: string; email: string; };
+  assignedTo?: any;
+  resolution?: string;
+  resolutionNotes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface MessageDetails {
+  sender: string;
+  senderId: { _id: string; firstName?: string; lastName?: string; role: string; };
+  message: string;
+  createdAt: string;
+}
+
 export const Notifications: React.FC = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [filter, setFilter] = useState<'all' | 'unread'>('all');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const navigate = useNavigate();
+  const [selectedNotification, setSelectedNotification] = useState<Notification | null>(null);
+  const [detailsData, setDetailsData] = useState<ComplaintDetails | MessageDetails[] | null>(null);
+  const [loadingDetails, setLoadingDetails] = useState(false);
 
   useEffect(() => {
     const fetchNotifications = async () => {
@@ -97,7 +124,7 @@ export const Notifications: React.FC = () => {
     }
   };
 
-  const handleNotificationClick = (notification: Notification) => {
+  const handleNotificationClick = async (notification: Notification) => {
     const complaintId = typeof notification.complaintId === 'string' 
       ? notification.complaintId 
       : notification.complaintId._id;
@@ -105,7 +132,41 @@ export const Notifications: React.FC = () => {
     if (!notification.isRead) {
       markAsRead(notification._id);
     }
-    navigate(`/passenger/complaints/${complaintId}`);
+
+    setSelectedNotification(notification);
+    setLoadingDetails(true);
+    setError(null);
+
+    try {
+      if (notification.type === 'new_message') {
+        // Fetch messages for new_message notifications
+        const response = await apiClient.getComplaintMessages(complaintId);
+        if (response.success && response.data) {
+          setDetailsData(response.data);
+        } else {
+          setError('Failed to load messages');
+        }
+      } else {
+        // Fetch complaint details for status_change and resolved notifications
+        const response = await apiClient.getComplaint(complaintId);
+        if (response.success && response.data) {
+          setDetailsData(response.data);
+        } else {
+          setError('Failed to load complaint details');
+        }
+      }
+    } catch (err) {
+      console.error('Error fetching details:', err);
+      setError('Failed to load details');
+    } finally {
+      setLoadingDetails(false);
+    }
+  };
+
+  const closeDetails = () => {
+    setSelectedNotification(null);
+    setDetailsData(null);
+    setError(null);
   };
 
   const getNotificationIcon = (type: string) => {
@@ -139,20 +200,173 @@ export const Notifications: React.FC = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Notifications</h1>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+            {selectedNotification 
+              ? (selectedNotification.type === 'new_message' ? 'Message Details' : 'Complaint Details')
+              : 'Notifications'
+            }
+          </h1>
           <p className="text-gray-600 dark:text-gray-400 mt-1">
-            {unreadCount > 0 && `You have ${unreadCount} unread notification${unreadCount > 1 ? 's' : ''}`}
+            {selectedNotification
+              ? 'View details from notification'
+              : unreadCount > 0 && `You have ${unreadCount} unread notification${unreadCount > 1 ? 's' : ''}`
+            }
           </p>
         </div>
-        {unreadCount > 0 && (
-          <Button variant="outline" onClick={markAllAsRead}>
-            Mark All as Read
-          </Button>
-        )}
+        <div className="flex gap-2">
+          {selectedNotification && (
+            <Button variant="outline" onClick={closeDetails}>
+              ← Back to Notifications
+            </Button>
+          )}
+          {!selectedNotification && unreadCount > 0 && (
+            <Button variant="outline" onClick={markAllAsRead}>
+              Mark All as Read
+            </Button>
+          )}
+        </div>
       </div>
 
-      {/* Filter Tabs */}
-      <div className="flex space-x-2 border-b border-gray-200 dark:border-gray-700">
+      {/* Details View */}
+      {selectedNotification ? (
+        <div>
+          {loadingDetails ? (
+            <div className="text-center py-12">
+              <p className="text-gray-600 dark:text-gray-400">Loading details...</p>
+            </div>
+          ) : selectedNotification.type === 'new_message' ? (
+            // Message Details View
+            <Card className="p-6">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
+                {selectedNotification.title}
+              </h2>
+              <p className="text-gray-700 dark:text-gray-300 mb-6">
+                {selectedNotification.message}
+              </p>
+              
+              {Array.isArray(detailsData) && detailsData.length > 0 ? (
+                <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+                  <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Recent Messages</h3>
+                  <div className="space-y-4">
+                    {detailsData.slice(-5).reverse().map((msg: any, idx) => (
+                      <div key={idx} className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+                        <div className="flex justify-between items-start mb-2">
+                          <div>
+                            <span className="font-medium text-gray-900 dark:text-white">
+                              {msg.senderId?.firstName} {msg.senderId?.lastName}
+                            </span>
+                            <Badge className="ml-2" variant={
+                              msg.senderId?.role === 'officer' ? 'warning' :
+                              msg.senderId?.role === 'admin' ? 'error' : 'default'
+                            }>
+                              {msg.senderId?.role}
+                            </Badge>
+                          </div>
+                          <span className="text-sm text-gray-500 dark:text-gray-400">
+                            {new Date(msg.createdAt).toLocaleString()}
+                          </span>
+                        </div>
+                        <p className="text-gray-700 dark:text-gray-300">{msg.message}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <p className="text-gray-500 dark:text-gray-400 text-center py-4">No messages available</p>
+              )}
+            </Card>
+          ) : (
+            // Complaint Details View (Read-only)
+            <Card className="p-6">
+              <div className="space-y-4">
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                    {(detailsData as ComplaintDetails)?.title}
+                  </h2>
+                  <div className="flex gap-2 mb-4">
+                    <Badge variant={
+                      (detailsData as ComplaintDetails)?.status === 'resolved' ? 'success' :
+                      (detailsData as ComplaintDetails)?.status === 'in-progress' ? 'warning' :
+                      (detailsData as ComplaintDetails)?.status === 'pending' ? 'info' : 'default'
+                    }>
+                      {(detailsData as ComplaintDetails)?.status}
+                    </Badge>
+                    <Badge variant={
+                      (detailsData as ComplaintDetails)?.priority === 'high' ? 'error' :
+                      (detailsData as ComplaintDetails)?.priority === 'medium' ? 'warning' : 'default'
+                    }>
+                      {(detailsData as ComplaintDetails)?.priority} priority
+                    </Badge>
+                    <Badge>{(detailsData as ComplaintDetails)?.category}</Badge>
+                  </div>
+                </div>
+
+                <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+                  <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Description</h3>
+                  <p className="text-gray-700 dark:text-gray-300">{(detailsData as ComplaintDetails)?.description}</p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 border-t border-gray-200 dark:border-gray-700 pt-4">
+                  {(detailsData as ComplaintDetails)?.vehicleNumber && (
+                    <div>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">Vehicle Number</p>
+                      <p className="font-medium text-gray-900 dark:text-white">{(detailsData as ComplaintDetails).vehicleNumber}</p>
+                    </div>
+                  )}
+                  {(detailsData as ComplaintDetails)?.route && (
+                    <div>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">Route</p>
+                      <p className="font-medium text-gray-900 dark:text-white">{(detailsData as ComplaintDetails).route}</p>
+                    </div>
+                  )}
+                  {(detailsData as ComplaintDetails)?.location && (
+                    <div>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">Location</p>
+                      <p className="font-medium text-gray-900 dark:text-white">{(detailsData as ComplaintDetails).location}</p>
+                    </div>
+                  )}
+                  <div>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Date & Time</p>
+                    <p className="font-medium text-gray-900 dark:text-white">
+                      {new Date((detailsData as ComplaintDetails)?.dateTime).toLocaleString()}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Submitted On</p>
+                    <p className="font-medium text-gray-900 dark:text-white">
+                      {new Date((detailsData as ComplaintDetails)?.createdAt).toLocaleString()}
+                    </p>
+                  </div>
+                  {(detailsData as ComplaintDetails)?.assignedTo && (
+                    <div>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">Assigned To</p>
+                      <p className="font-medium text-gray-900 dark:text-white">
+                        {(detailsData as ComplaintDetails).assignedTo.firstName} {(detailsData as ComplaintDetails).assignedTo.lastName}
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {(detailsData as ComplaintDetails)?.resolution && (
+                  <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+                    <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Resolution</h3>
+                    <p className="text-gray-700 dark:text-gray-300">{(detailsData as ComplaintDetails).resolution}</p>
+                    {(detailsData as ComplaintDetails).resolutionNotes && (
+                      <div className="mt-2">
+                        <p className="text-sm text-gray-500 dark:text-gray-400">Notes:</p>
+                        <p className="text-gray-700 dark:text-gray-300">{(detailsData as ComplaintDetails).resolutionNotes}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </Card>
+          )}
+        </div>
+      ) : (
+        <>
+          {/* Filter Tabs */}
+          <div className="flex space-x-2 border-b border-gray-200 dark:border-gray-700">
         <button
           onClick={() => setFilter('all')}
           className={`px-4 py-2 font-medium ${
@@ -252,6 +466,8 @@ export const Notifications: React.FC = () => {
             </Card>
           ))}
         </div>
+        )}
+      </>
       )}
     </div>
   );
