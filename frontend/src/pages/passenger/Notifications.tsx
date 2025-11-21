@@ -124,6 +124,17 @@ export const Notifications: React.FC = () => {
     }
   };
 
+  const deleteNotification = async (id: string) => {
+    try {
+      const response = await apiClient.deleteNotification(id);
+      if (response.success) {
+        setNotifications(notifications.filter(n => n._id !== id));
+      }
+    } catch (err) {
+      console.error('Error deleting notification:', err);
+    }
+  };
+
   const handleNotificationClick = async (notification: Notification) => {
     const complaintId = typeof notification.complaintId === 'string' 
       ? notification.complaintId 
@@ -477,6 +488,15 @@ export const Notifications: React.FC = () => {
                       Mark as read
                     </button>
                   )}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      deleteNotification(notification._id);
+                    }}
+                    className="text-sm text-red-600 dark:text-red-400 hover:underline"
+                  >
+                    Delete
+                  </button>
                 </div>
               </div>
             </Card>

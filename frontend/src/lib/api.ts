@@ -120,6 +120,10 @@ class ApiClient {
       body: JSON.stringify({ userEmail }),
     });
   }
+
+  deleteNotification(id: string) {
+    return this.request<any>(`/notifications/${id}`, { method: 'DELETE' });
+  }
 }
 
 export const apiClient = new ApiClient();
