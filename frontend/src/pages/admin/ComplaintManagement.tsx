@@ -23,7 +23,7 @@ export const ComplaintManagement: React.FC = () => {
   const fetchComplaints = async () => {
     setLoading(true);
     try {
-      const response = await apiClient.getComplaints();
+      const response = await apiClient.getComplaints({ limit: 0 });
       if (response.success && response.data) {
         setComplaints(response.data);
       }
