@@ -235,7 +235,7 @@ export const ComplaintManagement: React.FC = () => {
                       typeof complaint.assignedTo === 'object' ? (
                         `${(complaint.assignedTo as any).firstName || ''} ${(complaint.assignedTo as any).lastName || ''}`
                       ) : (
-                        'Officer'
+                        '#' + complaint.assignedTo
                       )
                     ) : (
                       <span className="text-yellow-600 dark:text-yellow-400">Unassigned</span>
