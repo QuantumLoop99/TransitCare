@@ -19,6 +19,9 @@ export const Header: React.FC<HeaderProps> = ({ user, onSignOut }) => {
   const navigate = useNavigate();
   const { user: clerkUser } = useClerkUser();
 
+  const linkClass =
+    'px-3 py-2 rounded-full text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-300 dark:hover:text-white dark:hover:bg-gray-800 transition-colors';
+
   const handleSignOut = () => {
     onSignOut?.();
     navigate('/');
@@ -29,14 +32,14 @@ export const Header: React.FC<HeaderProps> = ({ user, onSignOut }) => {
       case 'admin':
         return '/admin/dashboard';
       case 'officer':
-        return '/officer/dashboard';
+        return '/transport/dashboard';
       default:
         return '/passenger/dashboard';
     }
   };
 
   return (
-    <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
+    <header className="sticky top-0 z-30 bg-white/80 dark:bg-gray-900/80 backdrop-blur border-b border-gray-200/70 dark:border-gray-800/70 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
@@ -52,57 +55,58 @@ export const Header: React.FC<HeaderProps> = ({ user, onSignOut }) => {
           <nav className="hidden md:flex items-center space-x-8">
             {user ? (
               <>
-                <Link
-                  to={getDashboardLink(user.role)}
-                  className="text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
-                >
+                <Link to={getDashboardLink(user.role)} className={linkClass}>
                   Dashboard
                 </Link>
                 {user.role === 'passenger' && (
-                  <Link
-                    to="/passenger/complaints"
-                    className="text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
-                  >
-                    My Complaints
-                  </Link>
+                  <>
+                    <Link to="/passenger/complaints" className={linkClass}>
+                      My Complaints
+                    </Link>
+                    <Link to="/passenger/complaints/new" className={linkClass}>
+                      New Complaint
+                    </Link>
+                    <Link to="/passenger/notifications" className={linkClass}>
+                      Notifications
+                    </Link>
+                  </>
                 )}
                 {user.role === 'admin' && (
                   <>
-                    <Link
-                      to="/admin/users"
-                      className="text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
-                    >
+                    <Link to="/admin/complaints" className={linkClass}>
+                      Complaints
+                    </Link>
+                    <Link to="/admin/users" className={linkClass}>
                       Users
                     </Link>
-                    <Link
-                      to="/admin/reports"
-                      className="text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
-                    >
+                    <Link to="/admin/reports" className={linkClass}>
                       Reports
+                    </Link>
+                    <Link to="/admin/settings" className={linkClass}>
+                      Settings
                     </Link>
                   </>
                 )}
                 {user.role === 'officer' && (
-                  <Link
-                    to="/officer/assigned"
-                    className="text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
-                  >
-                    Assigned
-                  </Link>
+                  <>
+                    <Link to="/transport/complaints" className={linkClass}>
+                      Assigned Complaints
+                    </Link>
+                    <Link to="/transport/complaints/history" className={linkClass}>
+                      History
+                    </Link>
+                  </>
                 )}
               </>
             ) : (
               <>
-                <Link
-                  to="/about"
-                  className="text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
-                >
+                <Link to="/" className={linkClass}>
+                  Home
+                </Link>
+                <Link to="/about" className={linkClass}>
                   About
                 </Link>
-                <Link
-                  to="/contact"
-                  className="text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
-                >
+                <Link to="/contact" className={linkClass}>
                   Contact
                 </Link>
               </>
