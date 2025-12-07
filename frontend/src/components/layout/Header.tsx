@@ -3,6 +3,7 @@ import { useUser as useClerkUser } from '@clerk/clerk-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Bus, LogOut, Settings, User } from 'lucide-react';
 import { Button } from '../ui/Button';
+import { ThemeToggle } from '../ui/ThemeToggle';
 
 interface HeaderProps {
   user?: {
@@ -110,6 +111,7 @@ export const Header: React.FC<HeaderProps> = ({ user, onSignOut }) => {
 
           {/* User Menu */}
           <div className="flex items-center space-x-4">
+            <ThemeToggle />
             {user ? (
               <div className="flex items-center space-x-2">
                 <div className="flex items-center space-x-2">
