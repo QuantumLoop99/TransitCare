@@ -375,8 +375,8 @@ app.post('/api/users/onboard', async (req, res) => {
         _id: existing?._id || ('mem-' + Date.now()),
         clerkId,
         email,
-        firstName,
-        lastName,
+        firstName: firstName || '',
+        lastName: lastName || '',
         role: existing?.role || 'passenger',
         createdAt: existing?.createdAt || new Date(),
         updatedAt: new Date(),
@@ -385,16 +385,30 @@ app.post('/api/users/onboard', async (req, res) => {
       return res.json({ success: true, data: updated, meta: { storage: 'memory' } });
     }
 
-    const user = await User.findOneAndUpdate(
-      { clerkId },
-      { $set: { email, firstName, lastName }, $setOnInsert: { role: 'passenger', clerkId } },
-      { upsert: true, new: true }
-    );
+    // Try to find existing user first
+    let user = await User.findOne({ clerkId });
+    
+    if (user) {
+      // Update existing user
+      user.email = email;
+      user.firstName = firstName || user.firstName || '';
+      user.lastName = lastName || user.lastName || '';
+      await user.save();
+    } else {
+      // Create new user
+      user = await User.create({
+        clerkId,
+        email,
+        firstName: firstName || '',
+        lastName: lastName || '',
+        role: 'passenger'
+      });
+    }
 
     res.json({ success: true, data: user, meta: { storage: 'db' } });
   } catch (error) {
-    console.error('Onboard error', error);
-    res.status(500).json({ success: false, error: error.message });
+    console.error('Onboard error:', error.message, error.stack);
+    res.status(500).json({ success: false, error: error.message || 'Unknown error' });
   }
 });
 
