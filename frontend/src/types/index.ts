@@ -9,7 +9,7 @@ export interface User {
 }
 
 export interface Complaint {
-  id: string;
+  _id: string;
   title: string;
   description: string;
   category: string;
