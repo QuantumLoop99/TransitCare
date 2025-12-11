@@ -9,7 +9,11 @@ interface StatCardProps {
     value: number;
     type: 'increase' | 'decrease';
   };
-  icon: typeof LucideIcon;
+  trend?: {
+    value: number;
+    isPositive: boolean;
+  };
+  icon: typeof LucideIcon | string;
   color?: 'blue' | 'green' | 'yellow' | 'red' | 'gray';
 }
 
@@ -25,32 +29,39 @@ export const StatCard: React.FC<StatCardProps> = ({
   title,
   value,
   change,
+  trend,
   icon: Icon,
   color = 'blue',
 }) => {
+  const displayChange = change || trend;
+  
   return (
     <Card>
       <CardContent>
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium text-gray-600">{title}</p>
-            <p className="text-2xl font-bold text-gray-900">{value}</p>
-            {change && (
+            <p className="text-sm font-medium text-gray-600 dark:text-gray-400">{title}</p>
+            <p className="text-2xl font-bold text-gray-900 dark:text-white">{value}</p>
+            {displayChange && (
               <div className="flex items-center mt-1">
                 <span
                   className={`text-sm font-medium ${
-                    change.type === 'increase' ? 'text-green-600' : 'text-red-600'
+                    (change?.type === 'increase' || trend?.isPositive) ? 'text-green-600' : 'text-red-600'
                   }`}
                 >
-                  {change.type === 'increase' ? '+' : '-'}
-                  {Math.abs(change.value)}%
+                  {(change?.type === 'increase' || trend?.isPositive) ? '+' : '-'}
+                  {Math.abs(change?.value || trend?.value || 0)}%
                 </span>
                 <span className="text-sm text-gray-500 ml-2">vs last month</span>
               </div>
             )}
           </div>
           <div className={`p-3 rounded-lg border ${colorClasses[color]}`}>
-            <Icon className="w-6 h-6" />
+            {typeof Icon === 'string' ? (
+              <span className="text-2xl">{Icon}</span>
+            ) : (
+              <Icon className="w-6 h-6" />
+            )}
           </div>
         </div>
       </CardContent>

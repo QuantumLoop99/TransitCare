@@ -1,294 +1,286 @@
-# TransitCare - Public Transport Complaint Management System
+# TransitCare
 
-A comprehensive web application for managing public transport complaints with AI-powered prioritization, built with React, Node.js, and MongoDB.
+An intelligent platform for managing public transportation complaints. Features AI-driven prioritization, role-based access, and real-time tracking. Built with modern web technologies including React, Express.js, and MongoDB.
 
-## 🚀 Features
+## Core Capabilities
 
-- **Role-based Authentication** with Clerk (Passengers, Officers, Admins)
-- **AI-powered Complaint Prioritization** using OpenAI
-- **Real-time Updates** and notifications
-- **Comprehensive Analytics** and reporting
-- **Mobile-responsive Design** with TailwindCSS
-- **Secure API** with JWT authentication
-- **MongoDB** for data persistence
+- **Multi-role Authentication** via Clerk (Passengers, Transport Officers, Administrators)
+- **Intelligent Prioritization** leveraging OpenAI for complaint analysis
+- **Live Notifications** and status tracking
+- **Business Intelligence** with detailed analytics and reports
+- **Responsive User Interface** using TailwindCSS
+- **Protected API** with JWT-based security
+- **Data Storage** with MongoDB
 
-## 🛠 Tech Stack
+## Technology Stack
 
-### Frontend
-- React 18 with TypeScript
-- Vite for build tooling
-- TailwindCSS for styling
-- React Router for navigation
-- Clerk for authentication
-- Lucide React for icons
-- React Hook Form for form handling
+### Client-Side
+- React 18 (TypeScript)
+- Vite (Development & Build)
+- TailwindCSS (Styling)
+- React Router (Client Navigation)
+- Clerk (Identity Management)
+- Lucide React (Icon Library)
+- React Hook Form (Form Management)
 
-### Backend (Reference Architecture)
-- Node.js with Express
+### Server-Side
+- Node.js + Express
 - TypeScript
-- MongoDB with Mongoose
-- JWT for internal authentication
-- OpenAI API integration
-- RESTful API design
+- Mongoose (MongoDB ODM)
+- JWT Authentication
+- OpenAI API
+- REST Architecture
 
-## 📋 Prerequisites
+## System Requirements
 
-- Node.js 18+ 
-- MongoDB (local or MongoDB Atlas)
-- OpenAI API key
-- Clerk account (for authentication)
+- Node.js version 18 or higher
+- MongoDB instance (cloud or local)
+- OpenAI API credentials
+- Clerk authentication setup
 
-## 🚀 Quick Start
+## Getting Started
 
-### 1. Environment Setup
-
-Copy the environment variables:
+### Step 1: Configure Environment Variables
 
 ```bash
 cp .env.example .env
 ```
 
-Fill in your environment variables in `.env`:
+Update `.env` with your credentials:
 
 ```env
-# Frontend
-VITE_CLERK_PUBLISHABLE_KEY=your_clerk_publishable_key
+# Client Configuration
+VITE_CLERK_PUBLISHABLE_KEY=your_clerk_key
 VITE_API_BASE_URL=http://localhost:3001/api
 
-# Backend (for reference)
-CLERK_SECRET_KEY=your_clerk_secret_key
+# Server Configuration
+CLERK_SECRET_KEY=your_clerk_secret
 MONGODB_URI=mongodb://localhost:27017/transitcare
-OPENAI_API_KEY=your_openai_api_key
-JWT_SECRET=your_jwt_secret
+OPENAI_API_KEY=your_openai_key
+JWT_SECRET=your_jwt_key
 ```
 
-### 2. Install Dependencies
+### Step 2: Install Dependencies
 
 ```bash
 npm install
 ```
 
-### 3. Start Development Server
+### Step 3: Launch Development Environment
 
 ```bash
 npm run dev
 ```
 
-The application will be available at `http://localhost:5173`
+Access the app at `http://localhost:5173`
 
-## 🏗 Project Structure
+## Application Architecture
 
 ```
 src/
-├── components/          # Reusable UI components
-│   ├── ui/             # Basic UI components (Card, Button, etc.)
-│   ├── layout/         # Layout components (Header, Layout)
-│   ├── forms/          # Form components
-│   └── complaints/     # Complaint-specific components
-├── pages/              # Page components
-│   ├── passenger/      # Passenger-specific pages
-│   └── admin/          # Admin-specific pages
-├── lib/                # Utility libraries
-├── types/              # TypeScript type definitions
-└── App.tsx             # Main application component
+├── components/          # Modular UI elements
+│   ├── ui/             # Primitive components (Card, Button, Input)
+│   ├── layout/         # Page structure (Header, Layout wrapper)
+│   ├── forms/          # Input-gathering components
+│   └── complaints/     # Domain-specific components
+├── pages/              # View templates
+│   ├── passenger/      # Passenger workflows
+│   └── admin/          # Administrator tools
+├── lib/                # Shared utilities
+├── types/              # TypeScript interfaces
+└── App.tsx             # Root component
 ```
 
-## 🔐 Authentication & Roles
+## User Types & Access Control
 
-### User Roles
+### Passenger Profile
+- Self-registration capability
+- File and monitor complaints
+- View resolution progress
+- Routes: `/passenger/*`
 
-1. **Passengers**
-   - Register themselves
-   - Submit complaints
-   - Track complaint status
-   - Access: `/passenger/*`
+### Transport Officer Profile
+- Admin-provisioned accounts
+- Handle assigned complaints
+- Update case status
+- Routes: `/officer/*`
 
-2. **Transport Officers**
-   - Created by admin
-   - Assigned complaints
-   - Update complaint status
-   - Access: `/officer/*`
+### Administrator Profile
+- Complete platform control
+- Manage user accounts
+- View system metrics
+- Routes: `/admin/*`
 
-3. **Administrators**
-   - Full system access
-   - User management
-   - System analytics
-   - Access: `/admin/*`
+### Authorization Strategy
 
-### Authentication Flow
+Clerk manages identity verification while the system applies role-based route guards and permission checks throughout the application.
 
-- Uses Clerk for user authentication
-- Role-based routing and access control
-- Separate login portals for different user types
+## Intelligent Complaint Analysis
 
-## 🤖 AI Integration
+OpenAI powers automatic complaint evaluation:
 
-The system uses OpenAI for automatic complaint prioritization:
+### Analysis Workflow
 
-### Prioritization Process
+1. **Ingestion**: System receives complaint content, classification, and metadata
+2. **Processing**: AI analyzes sentiment and urgency factors
+3. **Classification**: System assigns priority (critical/standard/routine) and confidence metric
+4. **Recording**: Decision captured in database for audit purposes
 
-1. **Input**: Complaint text, category, and metadata
-2. **AI Analysis**: Sentiment analysis and urgency detection  
-3. **Output**: Priority level (high/medium/low) and confidence score
-4. **Storage**: AI decision stored for audit trail
-
-### Sample AI Prompt Template
+### Example AI Analysis Template
 
 ```
-Analyze this public transport complaint and determine its priority level:
+Evaluate this transportation complaint and determine priority:
 
-Title: {complaint_title}
-Description: {complaint_description}
+Title: {title}
+Details: {description}
 Category: {category}
-Date: {date_time}
+Timestamp: {date_time}
 
-Consider factors like:
-- Safety implications
-- Service disruption impact
-- Number of affected passengers
-- Urgency of resolution needed
+Scoring Criteria:
+- Does this pose safety concerns?
+- What's the scope of service impact?
+- How many passengers are affected?
+- How soon does this need resolution?
 
-Respond with JSON:
+Return JSON format:
 {
-  "priority": "high|medium|low",
-  "reasoning": "explanation",
-  "sentiment": -1 to 1,
-  "confidence": 0 to 1
+  "priority": "critical|standard|routine",
+  "justification": "brief explanation",
+  "emotion": -1 to 1,
+  "certainty": 0 to 1
 }
 ```
 
-## 📊 API Endpoints (Reference)
+## API Reference (Backend Blueprint)
 
-### Complaints
-- `GET /api/complaints` - List complaints (with filters)
-- `POST /api/complaints` - Create new complaint
-- `GET /api/complaints/:id` - Get complaint details
-- `PUT /api/complaints/:id` - Update complaint
-- `POST /api/complaints/:id/prioritize` - AI prioritization
+### Complaint Operations
+- `GET /api/complaints` - Retrieve complaints with filtering
+- `POST /api/complaints` - Submit new complaint
+- `GET /api/complaints/:id` - Fetch complaint details
+- `PUT /api/complaints/:id` - Modify complaint
+- `POST /api/complaints/:id/prioritize` - Trigger AI analysis
 
-### Users
+### User Management
 - `GET /api/users` - List users (admin only)
 - `POST /api/users` - Create user (admin only)
-- `PUT /api/users/:id` - Update user
+- `PUT /api/users/:id` - Modify user
 
-### Dashboard
-- `GET /api/dashboard/stats` - Get dashboard statistics
-- `GET /api/reports/:type` - Generate reports
+### Statistics & Reports
+- `GET /api/dashboard/stats` - Fetch dashboard metrics
+- `GET /api/reports/:type` - Generate report by type
 
-## 🧪 Testing
+## Running Tests
 
-### Frontend Testing
+### Client Tests
 ```bash
-# Run unit tests
+# Execute unit tests
 npm run test
 
-# Run tests in watch mode
+# Continuous testing
 npm run test:watch
 
-# Generate coverage report
+# Generate test coverage
 npm run test:coverage
 ```
 
-### Backend Testing (Reference)
+### Server Tests (Reference)
 ```bash
-# Run API tests
+# Test API endpoints
 npm run test:api
 
-# Run integration tests
+# End-to-end tests
 npm run test:integration
 ```
 
-## 🚀 Deployment
+## Deployment Guide
 
-### Frontend Deployment
+### Publishing Frontend
 
-#### Vercel
+#### Via Vercel
 ```bash
 npm run build
 vercel --prod
 ```
 
-#### Netlify
+#### Via Netlify
 ```bash
 npm run build
-# Deploy dist/ folder to Netlify
+# Upload dist/ directory to Netlify
 ```
 
-### Backend Deployment (Reference)
+### Publishing Backend (Reference)
 
-#### Render
-1. Connect GitHub repository
-2. Set environment variables
-3. Deploy with automatic builds
+#### Using Render
+1. Link your GitHub repository
+2. Configure environment variables in Render dashboard
+3. Enable automatic deployments
 
-#### Heroku
+#### Using Heroku
 ```bash
 heroku create transitcare-api
 heroku config:set NODE_ENV=production
 git push heroku main
 ```
 
-## 📝 Development Guidelines
+## Best Practices & Standards
 
-### Code Style
-- Use TypeScript for type safety
-- Follow React best practices
-- Use functional components with hooks
-- Implement proper error handling
+### Code Quality
+- Leverage TypeScript for compile-time safety
+- Adopt React compositional patterns
+- Use hooks for state and side effects
+- Implement comprehensive error handling
 
-### File Organization
-- Keep components under 200 lines
-- Use proper separation of concerns
-- Create reusable UI components
-- Organize by feature, not file type
+### Component Design
+- Keep component files under 250 lines
+- Separate concerns into distinct modules
+- Build reusable, focused components
+- Organize by domain, not file extension
 
-### State Management
-- Use React hooks for local state
-- Context API for global state
-- Consider Redux Toolkit for complex state
+### State Strategy
+- React hooks for component-level state
+- Context API for shared state
+- Evaluate Redux Toolkit for complex scenarios
 
-## 🔍 Monitoring & Analytics
+## Observability & Metrics
 
-### Key Metrics
-- Complaint resolution time
-- User satisfaction scores
-- System performance metrics
-- AI prioritization accuracy
+### Performance Indicators
+- Mean complaint resolution time
+- User satisfaction ratings
+- System uptime percentage
+- AI prioritization effectiveness
 
-### Logging
-- API request/response logging
-- Error tracking and reporting
-- User activity monitoring
-- Performance metrics
+### Event Tracking
+- Comprehensive request/response logs
+- Error capture and reporting
+- User journey tracking
+- Performance benchmarking
 
-## 📚 Additional Resources
+## Reference Documentation
 
-- [React Documentation](https://reactjs.org/docs/)
-- [TailwindCSS Documentation](https://tailwindcss.com/docs)
-- [Clerk Authentication](https://clerk.com/docs)
-- [OpenAI API Documentation](https://platform.openai.com/docs)
-- [MongoDB Documentation](https://docs.mongodb.com/)
+- [React Official Guide](https://reactjs.org/docs/)
+- [TailwindCSS Reference](https://tailwindcss.com/docs)
+- [Clerk Integration Guide](https://clerk.com/docs)
+- [OpenAI API Docs](https://platform.openai.com/docs)
+- [MongoDB Manual](https://docs.mongodb.com/)
 
-## 🤝 Contributing
+## Contribution Process
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests for new features
-5. Ensure all tests pass
-6. Submit a pull request
+1. Clone the repository and create a feature branch
+2. Implement your changes with tests
+3. Ensure all tests pass locally
+4. Submit a pull request with a clear description
 
-## 📄 License
+## Licensing
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+MIT License - See [LICENSE](LICENSE) for details
 
-## 🆘 Support
+## Help & Contact
 
-For support and questions:
-- Create an issue in the GitHub repository
-- Email: support@transitcare.com
-- Documentation: [https://docs.transitcare.com](https://docs.transitcare.com)
+Need assistance?
+- File an issue on GitHub
+- Reach out to: support@transitcare.com
+- Visit documentation: [https://docs.transitcare.com](https://docs.transitcare.com)
 
 ---
 
-**TransitCare** - Transforming public transport complaint management with AI-powered solutions.
+**TransitCare** — Revolutionizing public transport feedback systems through intelligent automation.
