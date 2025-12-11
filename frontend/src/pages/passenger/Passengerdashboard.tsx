@@ -7,8 +7,11 @@ import { StatCard } from '../../components/dashboard/StatCard';
 import { ComplaintList } from '../../components/complaints/ComplaintList';
 import { apiClient } from '../../lib/api';
 import { Complaint } from '../../types';
+import { useSyncUserEmail } from '../../useSyncUserEmail'; // ✅ new import
 
 export const PassengerDashboard: React.FC = () => {
+  useSyncUserEmail(); // ✅ ensures userEmail is stored in localStorage after login
+
   const [complaints, setComplaints] = useState<Complaint[]>([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
@@ -55,7 +58,9 @@ export const PassengerDashboard: React.FC = () => {
       <div className="flex justify-between items-start">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Welcome back!</h1>
-          <p className="text-gray-600 mt-2">Track your complaints and get real-time updates on their status.</p>
+          <p className="text-gray-600 mt-2">
+            Track your complaints and get real-time updates on their status.
+          </p>
         </div>
         <Link to="/passenger/complaints/new">
           <Button>
@@ -67,30 +72,10 @@ export const PassengerDashboard: React.FC = () => {
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard
-          title="Total Complaints"
-          value={stats.total}
-          icon={FileText}
-          color="blue"
-        />
-        <StatCard
-          title="Pending"
-          value={stats.pending}
-          icon={Clock}
-          color="yellow"
-        />
-        <StatCard
-          title="In Progress"
-          value={stats.inProgress}
-          icon={AlertTriangle}
-          color="blue"
-        />
-        <StatCard
-          title="Resolved"
-          value={stats.resolved}
-          icon={CheckCircle}
-          color="green"
-        />
+        <StatCard title="Total Complaints" value={stats.total} icon={FileText} color="blue" />
+        <StatCard title="Pending" value={stats.pending} icon={Clock} color="yellow" />
+        <StatCard title="In Progress" value={stats.inProgress} icon={AlertTriangle} color="blue" />
+        <StatCard title="Resolved" value={stats.resolved} icon={CheckCircle} color="green" />
       </div>
 
       {/* Quick Actions */}
@@ -109,7 +94,7 @@ export const PassengerDashboard: React.FC = () => {
                 </div>
               </Button>
             </Link>
-            
+
             <Link to="/passenger/complaints">
               <Button variant="outline" className="w-full justify-start h-auto py-4">
                 <FileText className="w-5 h-5 mr-3 text-green-600" />
@@ -143,7 +128,7 @@ export const PassengerDashboard: React.FC = () => {
             </Button>
           </Link>
         </div>
-        
+
         <ComplaintList
           complaints={complaints}
           loading={loading}

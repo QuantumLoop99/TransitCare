@@ -189,12 +189,13 @@ async function prioritizeComplaint(complaint) {
 // Complaints
 app.get('/api/complaints', async (req, res) => {
   try {
-    const { limit = 10, sort = 'createdAt', order = 'desc', status, priority, category } = req.query;
+    const { limit = 10, sort = 'createdAt', order = 'desc', status, priority, category, userEmail } = req.query;
     
     const filter = {};
     if (status) filter.status = status;
     if (priority) filter.priority = priority;
     if (category) filter.category = category;
+    if (userEmail) filter.submittedBy = userEmail; // restrict by owner
 
     const complaints = await Complaint.find(filter)
       .sort({ [sort]: order === 'desc' ? -1 : 1 })

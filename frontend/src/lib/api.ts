@@ -46,8 +46,13 @@ class ApiClient {
 
   // Complaint endpoints
   async getComplaints(filters?: Record<string, any>): Promise<ApiResponse<Complaint[]>> {
-    const query = filters ? `?${new URLSearchParams(filters).toString()}` : '';
-    return this.request<Complaint[]>(`/complaints${query}`);
+    const userEmail = localStorage.getItem("userEmail"); // store this at login
+    const params = new URLSearchParams({
+      ...(filters || {}),
+      ...(userEmail ? { userEmail } : {}),
+    }).toString();
+
+    return this.request<Complaint[]>(`/complaints?${params}`);
   }
 
   async getComplaint(id: string): Promise<ApiResponse<Complaint>> {
