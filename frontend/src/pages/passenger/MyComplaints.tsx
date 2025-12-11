@@ -10,35 +10,47 @@ export const MyComplaints: React.FC = () => {
   const [complaints, setComplaints] = useState<Complaint[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'pending' | 'in-progress' | 'resolved'>('all');
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    // TODO: Fetch complaints from API
-    const fetchComplaints = async () => {
-      setLoading(true);
-      // Simulated data
-      setTimeout(() => {
-        setComplaints([
-          {
-            id: '1',
-            title: 'Broken AC in Bus #1234',
-            description: 'The air conditioning is not working',
-            category: 'facilities',
-            priority: 'high',
-            status: 'in-progress',
-            vehicleNumber: '1234',
-            route: 'Route 45',
-            dateTime: '2025-12-10T10:30:00',
-            submittedBy: 'user-id',
-            createdAt: '2025-12-10T10:30:00',
-            updatedAt: '2025-12-11T08:00:00'
-          }
-        ]);
-        setLoading(false);
-      }, 1000);
-    };
+useEffect(() => {
+  const fetchComplaints = async () => {
+    setLoading(true);
+    setError(null);
 
-    fetchComplaints();
-  }, []);
+    try {
+      const userEmail = localStorage.getItem('userEmail');
+      const query = userEmail ? `?userEmail=${encodeURIComponent(userEmail)}` : '';
+      
+      // ✅ use the correct backend URL and query parameter
+      const response = await fetch(`http://localhost:3001/api/complaints${query}`, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch complaints');
+      }
+
+      const data = await response.json();
+
+      // ✅ backend returns { success, data: [...] }
+      if (data.success && data.data) {
+        setComplaints(data.data);
+      } else {
+        setComplaints([]);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load complaints');
+      console.error('Error fetching complaints:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchComplaints();
+}, []);
+
 
   const filteredComplaints = filter === 'all' 
     ? complaints 
@@ -126,6 +138,19 @@ export const MyComplaints: React.FC = () => {
         <div className="text-center py-12">
           <p className="text-gray-600 dark:text-gray-400">Loading complaints...</p>
         </div>
+      ) : error ? (
+        <Card className="p-12 text-center">
+          <div className="text-red-500 text-6xl mb-4">⚠️</div>
+          <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+            Error Loading Complaints
+          </h3>
+          <p className="text-gray-600 dark:text-gray-400 mb-6">
+            {error}
+          </p>
+          <Button onClick={() => navigate('/passenger/complaints/new')}>
+            Submit Your First Complaint
+          </Button>
+        </Card>
       ) : filteredComplaints.length === 0 ? (
         <Card className="p-12 text-center">
           <div className="text-gray-400 text-6xl mb-4">📋</div>
