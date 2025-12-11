@@ -59,10 +59,19 @@ export const UserManagement: React.FC = () => {
     }
   };
 
-  const handleDeleteUser = (userId: string) => {
+  const handleDeleteUser = async (userId: string) => {
     if (confirm('Are you sure you want to delete this user?')) {
-      setUsers(users.filter(u => u._id !== userId));
-      // TODO: Delete user via API
+      try {
+        const response = await apiClient.deleteUser(userId);
+        if (response.success) {
+          setUsers(users.filter(u => u._id !== userId));
+        } else {
+          alert('Failed to delete user');
+        }
+      } catch (error) {
+        console.error('Error deleting user:', error);
+        alert('Error deleting user');
+      }
     }
   };
 

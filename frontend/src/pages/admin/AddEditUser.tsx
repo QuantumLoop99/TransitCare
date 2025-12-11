@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
+import { apiClient } from '../../lib/api';
 
 export const AddEditUser: React.FC = () => {
   const navigate = useNavigate();
@@ -43,11 +44,34 @@ export const AddEditUser: React.FC = () => {
 
     setIsSubmitting(true);
 
-    // TODO: Submit to API
-    setTimeout(() => {
+    try {
+      const userData = {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        role: formData.role,
+      };
+
+      if (isEdit) {
+        const response = await apiClient.updateUser(id!, userData);
+        if (response.success) {
+          navigate('/admin/users');
+        } else {
+          setError(response.error || 'Failed to update user');
+        }
+      } else {
+        const response = await apiClient.createUser(userData);
+        if (response.success) {
+          navigate('/admin/users');
+        } else {
+          setError(response.error || 'Failed to create user');
+        }
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+    } finally {
       setIsSubmitting(false);
-      navigate('/admin/users');
-    }, 1500);
+    }
   };
 
   return (
