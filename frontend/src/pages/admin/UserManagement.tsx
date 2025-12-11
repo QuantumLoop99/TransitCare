@@ -4,15 +4,16 @@ import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { Input } from '../../components/ui/Input';
+import { apiClient } from '../../lib/api';
 
 interface User {
   _id: string;
   email: string;
-  firstName: string;
-  lastName: string;
+  firstName?: string;
+  lastName?: string;
   role: 'passenger' | 'officer' | 'admin';
   createdAt: string;
-  status: 'active' | 'inactive';
+  status?: 'active' | 'inactive';
 }
 
 export const UserManagement: React.FC = () => {
@@ -23,45 +24,22 @@ export const UserManagement: React.FC = () => {
   const [filterRole, setFilterRole] = useState<string>('all');
 
   useEffect(() => {
-    // TODO: Fetch users from API
-    const fetchUsers = async () => {
-      setLoading(true);
-      setTimeout(() => {
-        setUsers([
-          {
-            _id: '1',
-            email: 'john.passenger@example.com',
-            firstName: 'John',
-            lastName: 'Doe',
-            role: 'passenger',
-            createdAt: '2025-01-15T10:00:00',
-            status: 'active'
-          },
-          {
-            _id: '2',
-            email: 'jane.officer@example.com',
-            firstName: 'Jane',
-            lastName: 'Smith',
-            role: 'officer',
-            createdAt: '2025-01-10T08:00:00',
-            status: 'active'
-          },
-          {
-            _id: '3',
-            email: 'admin@example.com',
-            firstName: 'Admin',
-            lastName: 'User',
-            role: 'admin',
-            createdAt: '2025-01-01T00:00:00',
-            status: 'active'
-          }
-        ]);
-        setLoading(false);
-      }, 1000);
-    };
-
     fetchUsers();
   }, []);
+
+  const fetchUsers = async () => {
+    setLoading(true);
+    try {
+      const response = await apiClient.getUsers();
+      if (response.success && response.data) {
+        setUsers(response.data);
+      }
+    } catch (error) {
+      console.error('Error fetching users:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filteredUsers = users.filter(user => {
     const matchesSearch = 
@@ -81,10 +59,19 @@ export const UserManagement: React.FC = () => {
     }
   };
 
-  const handleDeleteUser = (userId: string) => {
+  const handleDeleteUser = async (userId: string) => {
     if (confirm('Are you sure you want to delete this user?')) {
-      setUsers(users.filter(u => u._id !== userId));
-      // TODO: Delete user via API
+      try {
+        const response = await apiClient.deleteUser(userId);
+        if (response.success) {
+          setUsers(users.filter(u => u._id !== userId));
+        } else {
+          alert('Failed to delete user');
+        }
+      } catch (error) {
+        console.error('Error deleting user:', error);
+        alert('Error deleting user');
+      }
     }
   };
 
@@ -196,7 +183,9 @@ export const UserManagement: React.FC = () => {
                   <tr key={user._id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900 dark:text-white">
-                        {user.firstName} {user.lastName}
+                        {user.firstName && user.lastName 
+                          ? `${user.firstName} ${user.lastName}` 
+                          : user.email.split('@')[0]}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -211,7 +200,7 @@ export const UserManagement: React.FC = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <Badge variant={user.status === 'active' ? 'success' : 'default'}>
-                        {user.status.toUpperCase()}
+                        {(user.status || 'active').toUpperCase()}
                       </Badge>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">

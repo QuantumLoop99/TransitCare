@@ -5,6 +5,7 @@ import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { Input } from '../../components/ui/Input';
 import { Complaint } from '../../types';
+import { apiClient } from '../../lib/api';
 
 export const ComplaintManagement: React.FC = () => {
   const navigate = useNavigate();
@@ -16,47 +17,22 @@ export const ComplaintManagement: React.FC = () => {
   const [filterCategory, setFilterCategory] = useState<string>('all');
 
   useEffect(() => {
-    // TODO: Fetch all complaints from API
-    const fetchComplaints = async () => {
-      setLoading(true);
-      setTimeout(() => {
-        setComplaints([
-          {
-            id: '1',
-            title: 'Broken AC in Bus #1234',
-            description: 'Air conditioning not working',
-            category: 'facilities',
-            priority: 'high',
-            status: 'in-progress',
-            vehicleNumber: '1234',
-            route: 'Route 45',
-            dateTime: '2025-12-11T10:00:00',
-            submittedBy: 'user-id',
-            assignedTo: 'officer-1',
-            createdAt: '2025-12-11T10:00:00',
-            updatedAt: '2025-12-11T10:00:00'
-          },
-          {
-            id: '2',
-            title: 'Rude Driver Behavior',
-            description: 'Driver was rude',
-            category: 'behavior',
-            priority: 'medium',
-            status: 'pending',
-            vehicleNumber: '5678',
-            route: 'Route 12',
-            dateTime: '2025-12-10T14:30:00',
-            submittedBy: 'user-id-2',
-            createdAt: '2025-12-10T14:30:00',
-            updatedAt: '2025-12-10T14:30:00'
-          }
-        ]);
-        setLoading(false);
-      }, 1000);
-    };
-
     fetchComplaints();
   }, []);
+
+  const fetchComplaints = async () => {
+    setLoading(true);
+    try {
+      const response = await apiClient.getComplaints();
+      if (response.success && response.data) {
+        setComplaints(response.data);
+      }
+    } catch (error) {
+      console.error('Error fetching complaints:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filteredComplaints = complaints.filter(complaint => {
     const matchesSearch = 
@@ -165,11 +141,14 @@ export const ComplaintManagement: React.FC = () => {
               className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             >
               <option value="all">All Categories</option>
-              <option value="facilities">Facilities</option>
-              <option value="behavior">Behavior</option>
+              <option value="service">Service Quality</option>
+              <option value="safety">Safety Concern</option>
+              <option value="accessibility">Accessibility</option>
               <option value="cleanliness">Cleanliness</option>
-              <option value="schedule">Schedule</option>
-              <option value="safety">Safety</option>
+              <option value="staff">Staff Behavior</option>
+              <option value="vehicle">Vehicle Condition</option>
+              <option value="schedule">Schedule/Timing</option>
+              <option value="other">Other</option>
             </select>
           </div>
         </div>
@@ -224,7 +203,7 @@ export const ComplaintManagement: React.FC = () => {
             Showing {filteredComplaints.length} complaint{filteredComplaints.length !== 1 ? 's' : ''}
           </p>
           {filteredComplaints.map((complaint) => (
-            <Card key={complaint.id} className="p-6">
+            <Card key={complaint._id} className="p-6">
               <div className="flex justify-between items-start mb-4">
                 <div className="flex-1">
                   <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
@@ -247,7 +226,7 @@ export const ComplaintManagement: React.FC = () => {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm mb-4">
                 <div>
                   <span className="text-gray-500 dark:text-gray-400">ID:</span>
-                  <p className="font-medium text-gray-900 dark:text-white">#{complaint.id}</p>
+                  <p className="font-medium text-gray-900 dark:text-white">#{complaint._id}</p>
                 </div>
                 <div>
                   <span className="text-gray-500 dark:text-gray-400">Vehicle:</span>
@@ -273,21 +252,21 @@ export const ComplaintManagement: React.FC = () => {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => navigate(`/admin/complaints/${complaint.id}`)}
+                  onClick={() => navigate(`/admin/complaints/${complaint._id}`)}
                 >
                   View Details
                 </Button>
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => handleReassign(complaint.id)}
+                  onClick={() => handleReassign(complaint._id)}
                 >
                   Reassign
                 </Button>
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => handleEscalate(complaint.id)}
+                  onClick={() => handleEscalate(complaint._id)}
                 >
                   Escalate
                 </Button>

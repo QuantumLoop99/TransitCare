@@ -46,13 +46,8 @@ class ApiClient {
 
   // Complaint endpoints
   async getComplaints(filters?: Record<string, any>): Promise<ApiResponse<Complaint[]>> {
-    const userEmail = localStorage.getItem("userEmail"); // store this at login
-    const params = new URLSearchParams({
-      ...(filters || {}),
-      ...(userEmail ? { userEmail } : {}),
-    }).toString();
-
-    return this.request<Complaint[]>(`/complaints?${params}`);
+    const params = new URLSearchParams(filters || {}).toString();
+    return this.request<Complaint[]>(`/complaints${params ? '?' + params : ''}`);
   }
 
   async getComplaint(id: string): Promise<ApiResponse<Complaint>> {
@@ -84,7 +79,7 @@ class ApiClient {
     return this.request<User[]>('/users');
   }
 
-  async createUser(data: Omit<User, 'id' | 'createdAt' | 'updatedAt'>): Promise<ApiResponse<User>> {
+  async createUser(data: Omit<User, '_id' | 'createdAt' | 'updatedAt'>): Promise<ApiResponse<User>> {
     return this.request<User>('/users', {
       method: 'POST',
       body: JSON.stringify(data),
@@ -95,6 +90,12 @@ class ApiClient {
     return this.request<User>(`/users/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data),
+    });
+  }
+
+  async deleteUser(id: string): Promise<ApiResponse<{ success: boolean }>> {
+    return this.request<{ success: boolean }>(`/users/${id}`, {
+      method: 'DELETE',
     });
   }
 
