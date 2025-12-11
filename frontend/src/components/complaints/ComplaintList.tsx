@@ -11,6 +11,7 @@ interface ComplaintListProps {
   loading?: boolean;
   onViewDetails?: (complaint: Complaint) => void;
   showAssignee?: boolean;
+  showPriority?: boolean;
 }
 
 export const ComplaintList: React.FC<ComplaintListProps> = ({
@@ -18,6 +19,7 @@ export const ComplaintList: React.FC<ComplaintListProps> = ({
   loading = false,
   onViewDetails,
   showAssignee = false,
+  showPriority = true,
 }) => {
   if (loading) {
     return (
@@ -70,7 +72,7 @@ export const ComplaintList: React.FC<ComplaintListProps> = ({
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {complaints.map((complaint) => (
-        <Card key={complaint.id} hover className="transition-all duration-200">
+        <Card key={complaint._id} hover className="transition-all duration-200">
           <CardContent>
             <div className="space-y-3">
               <div className="flex justify-between items-start">
@@ -79,7 +81,7 @@ export const ComplaintList: React.FC<ComplaintListProps> = ({
                 </h3>
                 <div className="flex space-x-1">
                   <StatusBadge status={complaint.status} />
-                  <PriorityBadge priority={complaint.priority} />
+                  {showPriority && <PriorityBadge priority={complaint.priority} />}
                 </div>
               </div>
 
