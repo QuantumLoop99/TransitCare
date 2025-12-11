@@ -8,6 +8,7 @@ import { ComplaintList } from '../../components/complaints/ComplaintList';
 import { apiClient } from '../../lib/api';
 import { Complaint } from '../../types';
 import { useSyncUserEmail } from '../../useSyncUserEmail'; // new import
+import { useNavigate } from 'react-router-dom';
 
 export const PassengerDashboard: React.FC = () => {
   useSyncUserEmail(); // ensures userEmail is stored in localStorage after login
@@ -57,9 +58,10 @@ export const PassengerDashboard: React.FC = () => {
     }
   };
 
+  const navigate = useNavigate();
+
   const handleViewDetails = (complaint: Complaint) => {
-    // Navigate to complaint details page
-    window.open(`/passenger/complaints/${complaint._id}`, '_blank');
+    navigate(`/passenger/complaints/${complaint._id}`);
   };
 
   return (
