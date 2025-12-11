@@ -115,174 +115,172 @@ src/
 
 Clerk manages identity verification while the system applies role-based route guards and permission checks throughout the application.
 
-## 🤖 AI Integration
+## Intelligent Complaint Analysis
 
-The system uses OpenAI for automatic complaint prioritization:
+OpenAI powers automatic complaint evaluation:
 
-### Prioritization Process
+### Analysis Workflow
 
-1. **Input**: Complaint text, category, and metadata
-2. **AI Analysis**: Sentiment analysis and urgency detection  
-3. **Output**: Priority level (high/medium/low) and confidence score
-4. **Storage**: AI decision stored for audit trail
+1. **Ingestion**: System receives complaint content, classification, and metadata
+2. **Processing**: AI analyzes sentiment and urgency factors
+3. **Classification**: System assigns priority (critical/standard/routine) and confidence metric
+4. **Recording**: Decision captured in database for audit purposes
 
-### Sample AI Prompt Template
+### Example AI Analysis Template
 
 ```
-Analyze this public transport complaint and determine its priority level:
+Evaluate this transportation complaint and determine priority:
 
-Title: {complaint_title}
-Description: {complaint_description}
+Title: {title}
+Details: {description}
 Category: {category}
-Date: {date_time}
+Timestamp: {date_time}
 
-Consider factors like:
-- Safety implications
-- Service disruption impact
-- Number of affected passengers
-- Urgency of resolution needed
+Scoring Criteria:
+- Does this pose safety concerns?
+- What's the scope of service impact?
+- How many passengers are affected?
+- How soon does this need resolution?
 
-Respond with JSON:
+Return JSON format:
 {
-  "priority": "high|medium|low",
-  "reasoning": "explanation",
-  "sentiment": -1 to 1,
-  "confidence": 0 to 1
+  "priority": "critical|standard|routine",
+  "justification": "brief explanation",
+  "emotion": -1 to 1,
+  "certainty": 0 to 1
 }
 ```
 
-## 📊 API Endpoints (Reference)
+## API Reference (Backend Blueprint)
 
-### Complaints
-- `GET /api/complaints` - List complaints (with filters)
-- `POST /api/complaints` - Create new complaint
-- `GET /api/complaints/:id` - Get complaint details
-- `PUT /api/complaints/:id` - Update complaint
-- `POST /api/complaints/:id/prioritize` - AI prioritization
+### Complaint Operations
+- `GET /api/complaints` - Retrieve complaints with filtering
+- `POST /api/complaints` - Submit new complaint
+- `GET /api/complaints/:id` - Fetch complaint details
+- `PUT /api/complaints/:id` - Modify complaint
+- `POST /api/complaints/:id/prioritize` - Trigger AI analysis
 
-### Users
+### User Management
 - `GET /api/users` - List users (admin only)
 - `POST /api/users` - Create user (admin only)
-- `PUT /api/users/:id` - Update user
+- `PUT /api/users/:id` - Modify user
 
-### Dashboard
-- `GET /api/dashboard/stats` - Get dashboard statistics
-- `GET /api/reports/:type` - Generate reports
+### Statistics & Reports
+- `GET /api/dashboard/stats` - Fetch dashboard metrics
+- `GET /api/reports/:type` - Generate report by type
 
-## 🧪 Testing
+## Running Tests
 
-### Frontend Testing
+### Client Tests
 ```bash
-# Run unit tests
+# Execute unit tests
 npm run test
 
-# Run tests in watch mode
+# Continuous testing
 npm run test:watch
 
-# Generate coverage report
+# Generate test coverage
 npm run test:coverage
 ```
 
-### Backend Testing (Reference)
+### Server Tests (Reference)
 ```bash
-# Run API tests
+# Test API endpoints
 npm run test:api
 
-# Run integration tests
+# End-to-end tests
 npm run test:integration
 ```
 
-## 🚀 Deployment
+## Deployment Guide
 
-### Frontend Deployment
+### Publishing Frontend
 
-#### Vercel
+#### Via Vercel
 ```bash
 npm run build
 vercel --prod
 ```
 
-#### Netlify
+#### Via Netlify
 ```bash
 npm run build
-# Deploy dist/ folder to Netlify
+# Upload dist/ directory to Netlify
 ```
 
-### Backend Deployment (Reference)
+### Publishing Backend (Reference)
 
-#### Render
-1. Connect GitHub repository
-2. Set environment variables
-3. Deploy with automatic builds
+#### Using Render
+1. Link your GitHub repository
+2. Configure environment variables in Render dashboard
+3. Enable automatic deployments
 
-#### Heroku
+#### Using Heroku
 ```bash
 heroku create transitcare-api
 heroku config:set NODE_ENV=production
 git push heroku main
 ```
 
-## 📝 Development Guidelines
+## Best Practices & Standards
 
-### Code Style
-- Use TypeScript for type safety
-- Follow React best practices
-- Use functional components with hooks
-- Implement proper error handling
+### Code Quality
+- Leverage TypeScript for compile-time safety
+- Adopt React compositional patterns
+- Use hooks for state and side effects
+- Implement comprehensive error handling
 
-### File Organization
-- Keep components under 200 lines
-- Use proper separation of concerns
-- Create reusable UI components
-- Organize by feature, not file type
+### Component Design
+- Keep component files under 250 lines
+- Separate concerns into distinct modules
+- Build reusable, focused components
+- Organize by domain, not file extension
 
-### State Management
-- Use React hooks for local state
-- Context API for global state
-- Consider Redux Toolkit for complex state
+### State Strategy
+- React hooks for component-level state
+- Context API for shared state
+- Evaluate Redux Toolkit for complex scenarios
 
-## 🔍 Monitoring & Analytics
+## Observability & Metrics
 
-### Key Metrics
-- Complaint resolution time
-- User satisfaction scores
-- System performance metrics
-- AI prioritization accuracy
+### Performance Indicators
+- Mean complaint resolution time
+- User satisfaction ratings
+- System uptime percentage
+- AI prioritization effectiveness
 
-### Logging
-- API request/response logging
-- Error tracking and reporting
-- User activity monitoring
-- Performance metrics
+### Event Tracking
+- Comprehensive request/response logs
+- Error capture and reporting
+- User journey tracking
+- Performance benchmarking
 
-## 📚 Additional Resources
+## Reference Documentation
 
-- [React Documentation](https://reactjs.org/docs/)
-- [TailwindCSS Documentation](https://tailwindcss.com/docs)
-- [Clerk Authentication](https://clerk.com/docs)
-- [OpenAI API Documentation](https://platform.openai.com/docs)
-- [MongoDB Documentation](https://docs.mongodb.com/)
+- [React Official Guide](https://reactjs.org/docs/)
+- [TailwindCSS Reference](https://tailwindcss.com/docs)
+- [Clerk Integration Guide](https://clerk.com/docs)
+- [OpenAI API Docs](https://platform.openai.com/docs)
+- [MongoDB Manual](https://docs.mongodb.com/)
 
-## 🤝 Contributing
+## Contribution Process
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests for new features
-5. Ensure all tests pass
-6. Submit a pull request
+1. Clone the repository and create a feature branch
+2. Implement your changes with tests
+3. Ensure all tests pass locally
+4. Submit a pull request with a clear description
 
-## 📄 License
+## Licensing
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+MIT License - See [LICENSE](LICENSE) for details
 
-## 🆘 Support
+## Help & Contact
 
-For support and questions:
-- Create an issue in the GitHub repository
-- Email: support@transitcare.com
-- Documentation: [https://docs.transitcare.com](https://docs.transitcare.com)
+Need assistance?
+- File an issue on GitHub
+- Reach out to: support@transitcare.com
+- Visit documentation: [https://docs.transitcare.com](https://docs.transitcare.com)
 
 ---
 
-**TransitCare** - Transforming public transport complaint management with AI-powered solutions.
+**TransitCare** — Revolutionizing public transport feedback systems through intelligent automation.
