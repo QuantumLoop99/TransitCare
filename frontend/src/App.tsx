@@ -14,8 +14,6 @@ const routerFutureConfig = {
 // Public Pages
 import { AboutPage } from './pages/public/AboutPage';
 import { ContactPage } from './pages/public/ContactPage';
-import { ForgotPassword } from './pages/auth/ForgotPassword';
-import { ResetPassword } from './pages/auth/ResetPassword';
 
 // Passenger Pages
 import { PassengerDashboard } from './pages/passenger/PassengerDashboard';
@@ -206,8 +204,6 @@ function App() {
             <Route path="/contact" element={<ContactPage />} />
             <Route path="/auth/sign-in" element={<SignIn />} />
             <Route path="/auth/sign-up" element={<SignUp />} />
-            <Route path="/auth/forgot-password" element={<ForgotPassword />} />
-            <Route path="/auth/reset-password" element={<ResetPassword />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         )}
