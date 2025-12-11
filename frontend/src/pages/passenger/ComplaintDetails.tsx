@@ -4,6 +4,7 @@ import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
+import { apiClient } from '../../lib/api';
 import { Complaint } from '../../types';
 
 interface Message {
@@ -31,47 +32,29 @@ export const ComplaintDetails: React.FC = () => {
   const [feedbackRating, setFeedbackRating] = useState(0);
   const [feedbackComment, setFeedbackComment] = useState('');
 
+  // ✅ Fetch real complaint data from backend
   useEffect(() => {
-    // TODO: Fetch complaint details from API
     const fetchComplaint = async () => {
+      if (!id) return;
       setLoading(true);
-      // Simulated data
-      setTimeout(() => {
-        setComplaint({
-          id: id || '1',
-          title: 'Broken AC in Bus #1234',
-          description: 'The air conditioning is not working properly in bus #1234. It has been malfunctioning for the past week.',
-          category: 'facilities',
-          priority: 'high',
-          status: 'in-progress',
-          vehicleNumber: '1234',
-          route: 'Route 45',
-          dateTime: '2025-12-10T10:30:00',
-          location: 'Main Street Station',
-          attachments: [],
-          submittedBy: 'user-id',
-          assignedTo: 'officer-id',
-          createdAt: '2025-12-10T10:30:00',
-          updatedAt: '2025-12-11T08:00:00'
-        });
 
-        setStatusTimeline([
-          { status: 'pending', timestamp: '2025-12-10T10:30:00', note: 'Complaint submitted' },
-          { status: 'in-progress', timestamp: '2025-12-10T14:00:00', note: 'Assigned to maintenance team' }
-        ]);
-
-        setMessages([
-          {
-            id: '1',
-            sender: 'officer',
-            senderName: 'John Smith',
-            message: 'We have received your complaint and our technician will inspect the AC system tomorrow morning.',
-            timestamp: '2025-12-10T15:00:00'
-          }
-        ]);
-
+      try {
+        const response = await apiClient.getComplaint(id);
+        if (response.success && response.data) {
+          setComplaint(response.data);
+          // Optionally generate a placeholder status timeline (until backend supports it)
+          setStatusTimeline([
+            { status: response.data.status, timestamp: response.data.createdAt, note: 'Complaint created' }
+          ]);
+        } else {
+          setComplaint(null);
+        }
+      } catch (error) {
+        console.error('Error fetching complaint details:', error);
+        setComplaint(null);
+      } finally {
         setLoading(false);
-      }, 1000);
+      }
     };
 
     fetchComplaint();
@@ -85,7 +68,7 @@ export const ComplaintDetails: React.FC = () => {
       sender: 'passenger',
       senderName: 'You',
       message: newMessage,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
 
     setMessages([...messages, message]);
@@ -101,23 +84,33 @@ export const ComplaintDetails: React.FC = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'pending': return 'warning';
-      case 'in-progress': return 'info';
-      case 'resolved': return 'success';
-      case 'closed': return 'default';
-      default: return 'default';
+      case 'pending':
+        return 'warning';
+      case 'in-progress':
+        return 'info';
+      case 'resolved':
+        return 'success';
+      case 'closed':
+        return 'default';
+      default:
+        return 'default';
     }
   };
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'high': return 'error';
-      case 'medium': return 'warning';
-      case 'low': return 'default';
-      default: return 'default';
+      case 'high':
+        return 'error';
+      case 'medium':
+        return 'warning';
+      case 'low':
+        return 'default';
+      default:
+        return 'default';
     }
   };
 
+  // ✅ Loading and fallback states
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -161,13 +154,13 @@ export const ComplaintDetails: React.FC = () => {
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
           {complaint.title}
         </h1>
-        
+
         <div className="grid md:grid-cols-2 gap-6 mb-6">
           <div>
             <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
               Complaint ID
             </h3>
-            <p className="text-gray-900 dark:text-white font-mono">#{complaint.id}</p>
+            <p className="text-gray-900 dark:text-white font-mono">#{complaint._id}</p>
           </div>
           <div>
             <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
@@ -257,9 +250,7 @@ export const ComplaintDetails: React.FC = () => {
                   </span>
                 </div>
                 {update.note && (
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                    {update.note}
-                  </p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{update.note}</p>
                 )}
               </div>
             </div>
@@ -267,11 +258,9 @@ export const ComplaintDetails: React.FC = () => {
         </div>
       </Card>
 
-      {/* Messages / Chat */}
+      {/* Messages */}
       <Card className="p-6">
-        <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
-          Messages
-        </h2>
+        <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Messages</h2>
         <div className="space-y-4 mb-4 max-h-96 overflow-y-auto">
           {messages.length === 0 ? (
             <p className="text-gray-500 dark:text-gray-400 text-center py-8">
@@ -312,7 +301,7 @@ export const ComplaintDetails: React.FC = () => {
         </div>
       </Card>
 
-      {/* Feedback Form (Only if resolved) */}
+      {/* Feedback Form */}
       {complaint.status === 'resolved' && (
         <Card className="p-6">
           <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">

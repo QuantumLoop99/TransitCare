@@ -170,9 +170,9 @@ useEffect(() => {
         <div className="grid gap-4">
           {filteredComplaints.map((complaint) => (
             <Card 
-              key={complaint.id} 
+              key={complaint._id} 
               className="p-6 hover:shadow-lg transition-shadow cursor-pointer"
-              onClick={() => navigate(`/passenger/complaints/${complaint.id}`)}
+              onClick={() => navigate(`/passenger/complaints/${complaint._id}`)}
             >
               <div className="flex justify-between items-start mb-4">
                 <div className="flex-1">
@@ -230,7 +230,7 @@ useEffect(() => {
                   size="sm"
                   onClick={(e) => {
                     e.stopPropagation();
-                    navigate(`/passenger/complaints/${complaint.id}`);
+                    navigate(`/passenger/complaints/${complaint._id}`);
                   }}
                 >
                   View Details →
