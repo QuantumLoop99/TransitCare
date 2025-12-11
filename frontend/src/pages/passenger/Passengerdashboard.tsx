@@ -7,10 +7,10 @@ import { StatCard } from '../../components/dashboard/StatCard';
 import { ComplaintList } from '../../components/complaints/ComplaintList';
 import { apiClient } from '../../lib/api';
 import { Complaint } from '../../types';
-import { useSyncUserEmail } from '../../useSyncUserEmail'; //new import
+import { useSyncUserEmail } from '../../useSyncUserEmail'; // new import
 
 export const PassengerDashboard: React.FC = () => {
-  useSyncUserEmail(); //ensures userEmail is stored in localStorage after login
+  useSyncUserEmail(); // ensures userEmail is stored in localStorage after login
 
   const [complaints, setComplaints] = useState<Complaint[]>([]);
   const [loading, setLoading] = useState(true);
@@ -44,7 +44,9 @@ export const PassengerDashboard: React.FC = () => {
         const total = response.data.length;
         const pending = response.data.filter(c => c.status === 'pending').length;
         const inProgress = response.data.filter(c => c.status === 'in-progress').length;
-        const resolved = response.data.filter(c => c.status === 'resolved' || c.status === 'closed').length;
+        const resolved = response.data.filter(
+          c => c.status === 'resolved' || c.status === 'closed'
+        ).length;
 
         setStats({ total, pending, inProgress, resolved });
       }
@@ -54,7 +56,6 @@ export const PassengerDashboard: React.FC = () => {
       setLoading(false);
     }
   };
-
 
   const handleViewDetails = (complaint: Complaint) => {
     // Navigate to complaint details page
@@ -138,10 +139,12 @@ export const PassengerDashboard: React.FC = () => {
           </Link>
         </div>
 
+        {/* Hide priority in ComplaintList */}
         <ComplaintList
           complaints={complaints}
           loading={loading}
           onViewDetails={handleViewDetails}
+          showPriority={false} 
         />
       </div>
     </div>

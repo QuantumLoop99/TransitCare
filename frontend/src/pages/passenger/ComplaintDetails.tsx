@@ -143,9 +143,9 @@ export const ComplaintDetails: React.FC = () => {
           <Badge variant={getStatusColor(complaint.status)}>
             {complaint.status.replace('-', ' ').toUpperCase()}
           </Badge>
-          <Badge variant={getPriorityColor(complaint.priority)}>
+          {/* <Badge variant={getPriorityColor(complaint.priority)}>
             {complaint.priority.toUpperCase()} PRIORITY
-          </Badge>
+          </Badge> */}
         </div>
       </div>
 
