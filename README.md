@@ -1,125 +1,119 @@
-# TransitCare - Public Transport Complaint Management System
+# TransitCare
 
-A comprehensive web application for managing public transport complaints with AI-powered prioritization, built with React, Node.js, and MongoDB.
+An intelligent platform for managing public transportation complaints. Features AI-driven prioritization, role-based access, and real-time tracking. Built with modern web technologies including React, Express.js, and MongoDB.
 
-## 🚀 Features
+## Core Capabilities
 
-- **Role-based Authentication** with Clerk (Passengers, Officers, Admins)
-- **AI-powered Complaint Prioritization** using OpenAI
-- **Real-time Updates** and notifications
-- **Comprehensive Analytics** and reporting
-- **Mobile-responsive Design** with TailwindCSS
-- **Secure API** with JWT authentication
-- **MongoDB** for data persistence
+- **Multi-role Authentication** via Clerk (Passengers, Transport Officers, Administrators)
+- **Intelligent Prioritization** leveraging OpenAI for complaint analysis
+- **Live Notifications** and status tracking
+- **Business Intelligence** with detailed analytics and reports
+- **Responsive User Interface** using TailwindCSS
+- **Protected API** with JWT-based security
+- **Data Storage** with MongoDB
 
-## 🛠 Tech Stack
+## Technology Stack
 
-### Frontend
-- React 18 with TypeScript
-- Vite for build tooling
-- TailwindCSS for styling
-- React Router for navigation
-- Clerk for authentication
-- Lucide React for icons
-- React Hook Form for form handling
+### Client-Side
+- React 18 (TypeScript)
+- Vite (Development & Build)
+- TailwindCSS (Styling)
+- React Router (Client Navigation)
+- Clerk (Identity Management)
+- Lucide React (Icon Library)
+- React Hook Form (Form Management)
 
-### Backend (Reference Architecture)
-- Node.js with Express
+### Server-Side
+- Node.js + Express
 - TypeScript
-- MongoDB with Mongoose
-- JWT for internal authentication
-- OpenAI API integration
-- RESTful API design
+- Mongoose (MongoDB ODM)
+- JWT Authentication
+- OpenAI API
+- REST Architecture
 
-## 📋 Prerequisites
+## System Requirements
 
-- Node.js 18+ 
-- MongoDB (local or MongoDB Atlas)
-- OpenAI API key
-- Clerk account (for authentication)
+- Node.js version 18 or higher
+- MongoDB instance (cloud or local)
+- OpenAI API credentials
+- Clerk authentication setup
 
-## 🚀 Quick Start
+## Getting Started
 
-### 1. Environment Setup
-
-Copy the environment variables:
+### Step 1: Configure Environment Variables
 
 ```bash
 cp .env.example .env
 ```
 
-Fill in your environment variables in `.env`:
+Update `.env` with your credentials:
 
 ```env
-# Frontend
-VITE_CLERK_PUBLISHABLE_KEY=your_clerk_publishable_key
+# Client Configuration
+VITE_CLERK_PUBLISHABLE_KEY=your_clerk_key
 VITE_API_BASE_URL=http://localhost:3001/api
 
-# Backend (for reference)
-CLERK_SECRET_KEY=your_clerk_secret_key
+# Server Configuration
+CLERK_SECRET_KEY=your_clerk_secret
 MONGODB_URI=mongodb://localhost:27017/transitcare
-OPENAI_API_KEY=your_openai_api_key
-JWT_SECRET=your_jwt_secret
+OPENAI_API_KEY=your_openai_key
+JWT_SECRET=your_jwt_key
 ```
 
-### 2. Install Dependencies
+### Step 2: Install Dependencies
 
 ```bash
 npm install
 ```
 
-### 3. Start Development Server
+### Step 3: Launch Development Environment
 
 ```bash
 npm run dev
 ```
 
-The application will be available at `http://localhost:5173`
+Access the app at `http://localhost:5173`
 
-## 🏗 Project Structure
+## Application Architecture
 
 ```
 src/
-├── components/          # Reusable UI components
-│   ├── ui/             # Basic UI components (Card, Button, etc.)
-│   ├── layout/         # Layout components (Header, Layout)
-│   ├── forms/          # Form components
-│   └── complaints/     # Complaint-specific components
-├── pages/              # Page components
-│   ├── passenger/      # Passenger-specific pages
-│   └── admin/          # Admin-specific pages
-├── lib/                # Utility libraries
-├── types/              # TypeScript type definitions
-└── App.tsx             # Main application component
+├── components/          # Modular UI elements
+│   ├── ui/             # Primitive components (Card, Button, Input)
+│   ├── layout/         # Page structure (Header, Layout wrapper)
+│   ├── forms/          # Input-gathering components
+│   └── complaints/     # Domain-specific components
+├── pages/              # View templates
+│   ├── passenger/      # Passenger workflows
+│   └── admin/          # Administrator tools
+├── lib/                # Shared utilities
+├── types/              # TypeScript interfaces
+└── App.tsx             # Root component
 ```
 
-## 🔐 Authentication & Roles
+## User Types & Access Control
 
-### User Roles
+### Passenger Profile
+- Self-registration capability
+- File and monitor complaints
+- View resolution progress
+- Routes: `/passenger/*`
 
-1. **Passengers**
-   - Register themselves
-   - Submit complaints
-   - Track complaint status
-   - Access: `/passenger/*`
+### Transport Officer Profile
+- Admin-provisioned accounts
+- Handle assigned complaints
+- Update case status
+- Routes: `/officer/*`
 
-2. **Transport Officers**
-   - Created by admin
-   - Assigned complaints
-   - Update complaint status
-   - Access: `/officer/*`
+### Administrator Profile
+- Complete platform control
+- Manage user accounts
+- View system metrics
+- Routes: `/admin/*`
 
-3. **Administrators**
-   - Full system access
-   - User management
-   - System analytics
-   - Access: `/admin/*`
+### Authorization Strategy
 
-### Authentication Flow
-
-- Uses Clerk for user authentication
-- Role-based routing and access control
-- Separate login portals for different user types
+Clerk manages identity verification while the system applies role-based route guards and permission checks throughout the application.
 
 ## 🤖 AI Integration
 
