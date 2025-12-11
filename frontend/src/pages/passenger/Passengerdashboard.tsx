@@ -7,10 +7,10 @@ import { StatCard } from '../../components/dashboard/StatCard';
 import { ComplaintList } from '../../components/complaints/ComplaintList';
 import { apiClient } from '../../lib/api';
 import { Complaint } from '../../types';
-import { useSyncUserEmail } from '../../useSyncUserEmail'; // ✅ new import
+import { useSyncUserEmail } from '../../useSyncUserEmail'; //new import
 
 export const PassengerDashboard: React.FC = () => {
-  useSyncUserEmail(); // ✅ ensures userEmail is stored in localStorage after login
+  useSyncUserEmail(); //ensures userEmail is stored in localStorage after login
 
   const [complaints, setComplaints] = useState<Complaint[]>([]);
   const [loading, setLoading] = useState(true);
@@ -28,16 +28,24 @@ export const PassengerDashboard: React.FC = () => {
   const fetchComplaints = async () => {
     setLoading(true);
     try {
-      const response = await apiClient.getComplaints({ limit: 6 });
+      // Fetch all complaints (or 3 max)
+      const response = await apiClient.getComplaints();
       if (response.success && response.data) {
-        setComplaints(response.data);
-        
+        // Sort by creation date (newest first)
+        const sorted = [...response.data].sort(
+          (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+
+        // Limit to the most recent 3
+        const recentComplaints = sorted.slice(0, 3);
+        setComplaints(recentComplaints);
+
         // Calculate stats
         const total = response.data.length;
         const pending = response.data.filter(c => c.status === 'pending').length;
         const inProgress = response.data.filter(c => c.status === 'in-progress').length;
         const resolved = response.data.filter(c => c.status === 'resolved' || c.status === 'closed').length;
-        
+
         setStats({ total, pending, inProgress, resolved });
       }
     } catch (error) {
@@ -47,9 +55,10 @@ export const PassengerDashboard: React.FC = () => {
     }
   };
 
+
   const handleViewDetails = (complaint: Complaint) => {
     // Navigate to complaint details page
-    window.open(`/passenger/complaints/${complaint.id}`, '_blank');
+    window.open(`/passenger/complaints/${complaint._id}`, '_blank');
   };
 
   return (
