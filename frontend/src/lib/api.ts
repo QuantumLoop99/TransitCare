@@ -75,7 +75,7 @@ class ApiClient {
   }
 
   // User endpoints
-  async getUsers(): Promise<ApiResponse<User[]>> {
+  async getUsers(p0: { role: string; }): Promise<ApiResponse<User[]>> {
     return this.request<User[]>('/users');
   }
 

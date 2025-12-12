@@ -259,6 +259,46 @@ app.put('/api/complaints/:id', async (req, res) => {
   }
 });
 
+// Assign or reassign complaint to an officer
+app.patch('/api/complaints/:id/assign', async (req, res) => {
+  try {
+    const { assignedTo, status } = req.body;
+
+    if (!assignedTo) {
+      return res.status(400).json({
+        success: false,
+        error: 'Officer ID (assignedTo) is required',
+      });
+    }
+
+    const complaint = await Complaint.findById(req.params.id);
+    if (!complaint) {
+      return res.status(404).json({
+        success: false,
+        error: 'Complaint not found',
+      });
+    }
+
+    // Update complaint
+    complaint.assignedTo = assignedTo;
+    complaint.status = status || 'in-progress';
+    await complaint.save();
+
+    res.json({
+      success: true,
+      data: complaint,
+      message: 'Complaint successfully reassigned',
+    });
+  } catch (error) {
+    console.error('Error assigning complaint:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Internal server error',
+    });
+  }
+});
+
+
 app.post('/api/complaints/:id/prioritize', async (req, res) => {
   try {
     const complaint = await Complaint.findById(req.params.id);

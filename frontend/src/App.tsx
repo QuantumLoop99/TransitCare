@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { SignIn, SignUp, useUser, useAuth } from '@clerk/clerk-react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Layout } from './components/layout/Layout';
@@ -16,7 +16,7 @@ import { AboutPage } from './pages/public/AboutPage';
 import { ContactPage } from './pages/public/ContactPage';
 
 // Passenger Pages
-import { PassengerDashboard } from './pages/passenger/PassengerDashboard';
+import { PassengerDashboard } from './pages/passenger/Passengerdashboard';
 import { Profile } from './pages/passenger/Profile';
 import { NewComplaint } from './pages/passenger/NewComplaint';
 import { MyComplaints } from './pages/passenger/MyComplaints';
@@ -38,6 +38,7 @@ import { PriorityRulesManagement } from './pages/admin/PriorityRulesManagement';
 import { AddEditPriorityRule } from './pages/admin/AddEditPriorityRule';
 import { ReportsAnalytics } from './pages/admin/ReportsAnalytics';
 import { SystemSettings } from './pages/admin/SystemSettings';
+import { OfficerAssignment } from './pages/admin/OfficerAssignment';
 
 type LocalUser = {
   _id?: string;
@@ -135,6 +136,7 @@ function App() {
                 <Route path="/admin/priority-rules/edit/:id" element={<AddEditPriorityRule />} />
                 <Route path="/admin/reports" element={<ReportsAnalytics />} />
                 <Route path="/admin/settings" element={<SystemSettings />} />
+                <Route path="/admin/officers/:complaintId" element={<OfficerAssignment />} />
 
                 {/* Default redirect based on role */}
                 <Route

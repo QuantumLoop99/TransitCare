@@ -70,7 +70,7 @@ export const ComplaintManagement: React.FC = () => {
   };
 
   const handleReassign = (complaintId: string) => {
-    navigate(`/admin/complaints/${complaintId}/reassign`);
+    navigate(`/admin/officers/${complaintId}`);
   };
 
   return (
