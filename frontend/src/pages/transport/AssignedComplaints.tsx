@@ -228,18 +228,16 @@ export const AssignedComplaints: React.FC = () => {
               )}
 
               <div className="flex justify-end space-x-2">
-                {complaint.status !== 'resolved' && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      navigate(`/transport/complaints/${complaint._id}`);
-                    }}
-                  >
-                    Update Status
-                  </Button>
-                )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate(`/transport/complaints/${complaint._id}`);
+                  }}
+                >
+                  Update Status
+                </Button>
               </div>
             </Card>
           ))}
