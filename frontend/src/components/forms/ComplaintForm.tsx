@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useForm } from 'react-hook-form';
-import { Calendar, MapPin, FileText, Bus } from 'lucide-react';
+import { FileText } from 'lucide-react';
 import { Card, CardHeader, CardContent } from '../ui/Card';
 import { Button } from '../ui/Button';
-import { Input, Textarea } from '../ui/Input';
+import { Input, Textarea } from '../ui/input';
 import { ComplaintFormData } from '../../types';
 
 interface ComplaintFormProps {

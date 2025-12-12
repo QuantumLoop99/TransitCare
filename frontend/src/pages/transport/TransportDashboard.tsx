@@ -5,6 +5,7 @@ import { StatCard } from '../../components/dashboard/StatCard';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 import { Complaint, DashboardStats } from '../../types';
+import { apiClient } from '../../lib/api';
 
 export const TransportDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -13,58 +14,57 @@ export const TransportDashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // TODO: Fetch dashboard data from API
     const fetchDashboardData = async () => {
       setLoading(true);
-      // Simulated data
-      setTimeout(() => {
-        setStats({
-          totalComplaints: 45,
-          pendingComplaints: 8,
-          resolvedComplaints: 32,
-          averageResolutionTime: 2.5,
-          priorityBreakdown: {
-            high: 5,
-            medium: 12,
-            low: 28
-          }
-        });
-
-        setRecentComplaints([
-          {
-            id: '1',
-            title: 'Broken AC in Bus #1234',
-            description: 'Air conditioning not working',
-            category: 'facilities',
-            priority: 'high',
-            status: 'in-progress',
-            vehicleNumber: '1234',
-            route: 'Route 45',
-            dateTime: '2025-12-11T10:00:00',
-            submittedBy: 'user-id',
-            assignedTo: 'current-officer',
-            createdAt: '2025-12-11T10:00:00',
-            updatedAt: '2025-12-11T10:00:00'
-          },
-          {
-            id: '2',
-            title: 'Rude Driver Behavior',
-            description: 'Driver was rude to passengers',
-            category: 'behavior',
-            priority: 'medium',
-            status: 'pending',
-            vehicleNumber: '5678',
-            route: 'Route 12',
-            dateTime: '2025-12-10T14:30:00',
-            submittedBy: 'user-id-2',
-            assignedTo: 'current-officer',
-            createdAt: '2025-12-10T14:30:00',
-            updatedAt: '2025-12-10T14:30:00'
-          }
-        ]);
-
+      try {
+        // Get current officer's email/ID from localStorage
+        const userEmail = localStorage.getItem('userEmail');
+        const userId = localStorage.getItem('userId');
+        
+        // Fetch all complaints from API
+        const response = await apiClient.getComplaints();
+        
+        if (response.success && response.data) {
+          // Filter complaints assigned to current officer
+          const allComplaints = response.data;
+          const assignedComplaints = allComplaints.filter(complaint => 
+            complaint.assignedTo === userId || 
+            complaint.assignedTo === userEmail ||
+            complaint.assignedTo === 'current-officer' // Fallback for mock data
+          );
+          
+          // Calculate statistics from assigned complaints only
+          const totalComplaints = assignedComplaints.length;
+          const pendingComplaints = assignedComplaints.filter(c => c.status === 'pending').length;
+          const resolvedComplaints = assignedComplaints.filter(c => c.status === 'resolved' || c.status === 'closed').length;
+          
+          // Calculate priority breakdown
+          const priorityBreakdown = {
+            high: assignedComplaints.filter(c => c.priority === 'high').length,
+            medium: assignedComplaints.filter(c => c.priority === 'medium').length,
+            low: assignedComplaints.filter(c => c.priority === 'low').length
+          };
+          
+          setStats({
+            totalComplaints,
+            pendingComplaints,
+            resolvedComplaints,
+            averageResolutionTime: 2.5, // TODO: Calculate from actual resolution times
+            priorityBreakdown
+          });
+          
+          // Get recent assigned complaints (last 5)
+          const recent = assignedComplaints
+            .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+            .slice(0, 5);
+          
+          setRecentComplaints(recent);
+        }
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+      } finally {
         setLoading(false);
-      }, 1000);
+      }
     };
 
     fetchDashboardData();
@@ -114,25 +114,21 @@ export const TransportDashboard: React.FC = () => {
             title="Assigned to Me"
             value={stats.totalComplaints}
             icon="📋"
-            trend={{ value: 12, isPositive: false }}
           />
           <StatCard
             title="Pending Action"
             value={stats.pendingComplaints}
             icon="⏳"
-            trend={{ value: 8, isPositive: false }}
           />
           <StatCard
             title="Resolved"
             value={stats.resolvedComplaints}
             icon="✓"
-            trend={{ value: 15, isPositive: true }}
           />
           <StatCard
             title="Avg. Resolution Time"
             value={`${stats.averageResolutionTime} days`}
             icon="⏱"
-            trend={{ value: 10, isPositive: true }}
           />
         </div>
       )}
@@ -191,9 +187,9 @@ export const TransportDashboard: React.FC = () => {
           <div className="grid gap-4">
             {recentComplaints.map((complaint) => (
               <Card
-                key={complaint.id}
+                key={complaint._id}
                 className="p-6 hover:shadow-lg transition-shadow cursor-pointer"
-                onClick={() => navigate(`/transport/complaints/${complaint.id}`)}
+                onClick={() => navigate(`/transport/complaints/${complaint._id}`)}
               >
                 <div className="flex justify-between items-start mb-4">
                   <div className="flex-1">
@@ -247,7 +243,7 @@ export const TransportDashboard: React.FC = () => {
                     size="sm"
                     onClick={(e) => {
                       e.stopPropagation();
-                      navigate(`/transport/complaints/${complaint.id}`);
+                      navigate(`/transport/complaints/${complaint._id}`);
                     }}
                   >
                     View & Update →

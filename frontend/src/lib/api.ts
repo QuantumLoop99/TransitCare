@@ -79,7 +79,7 @@ class ApiClient {
     return this.request<User[]>('/users');
   }
 
-  async createUser(data: Omit<User, '_id' | 'createdAt' | 'updatedAt'>): Promise<ApiResponse<User>> {
+  async createUser(data: Omit<User, 'id' | 'createdAt' | 'updatedAt'>): Promise<ApiResponse<User>> {
     return this.request<User>('/users', {
       method: 'POST',
       body: JSON.stringify(data),

@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
-import { Input } from '../../components/ui/Input';
+import { Input } from '../../components/ui/input';
 import { apiClient } from '../../lib/api';
 import { Complaint } from '../../types';
 
@@ -97,18 +97,7 @@ export const ComplaintDetails: React.FC = () => {
     }
   };
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'high':
-        return 'error';
-      case 'medium':
-        return 'warning';
-      case 'low':
-        return 'default';
-      default:
-        return 'default';
-    }
-  };
+  // Priority badge temporarily disabled; re-enable when needed.
 
   // ✅ Loading and fallback states
   if (loading) {

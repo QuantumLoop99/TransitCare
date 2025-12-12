@@ -4,6 +4,7 @@ import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 import { Complaint } from '../../types';
+import { apiClient } from '../../lib/api';
 
 export const AssignedComplaints: React.FC = () => {
   const navigate = useNavigate();
@@ -13,61 +14,32 @@ export const AssignedComplaints: React.FC = () => {
   const [sortBy, setSortBy] = useState<'date' | 'priority'>('date');
 
   useEffect(() => {
-    // TODO: Fetch assigned complaints from API
     const fetchComplaints = async () => {
       setLoading(true);
-      // Simulated data
-      setTimeout(() => {
-        setComplaints([
-          {
-            id: '1',
-            title: 'Broken AC in Bus #1234',
-            description: 'Air conditioning not working properly',
-            category: 'facilities',
-            priority: 'high',
-            status: 'in-progress',
-            vehicleNumber: '1234',
-            route: 'Route 45',
-            dateTime: '2025-12-11T10:00:00',
-            submittedBy: 'user-id',
-            assignedTo: 'current-officer',
-            createdAt: '2025-12-11T10:00:00',
-            updatedAt: '2025-12-11T10:00:00'
-          },
-          {
-            id: '2',
-            title: 'Rude Driver Behavior',
-            description: 'Driver was rude to passengers',
-            category: 'behavior',
-            priority: 'medium',
-            status: 'pending',
-            vehicleNumber: '5678',
-            route: 'Route 12',
-            dateTime: '2025-12-10T14:30:00',
-            submittedBy: 'user-id-2',
-            assignedTo: 'current-officer',
-            createdAt: '2025-12-10T14:30:00',
-            updatedAt: '2025-12-10T14:30:00'
-          },
-          {
-            id: '3',
-            title: 'Dirty Bus Interior',
-            description: 'Bus is not properly cleaned',
-            category: 'cleanliness',
-            priority: 'low',
-            status: 'resolved',
-            vehicleNumber: '9012',
-            route: 'Route 7',
-            dateTime: '2025-12-09T08:00:00',
-            submittedBy: 'user-id-3',
-            assignedTo: 'current-officer',
-            resolution: 'Bus has been thoroughly cleaned and inspection scheduled',
-            createdAt: '2025-12-09T08:00:00',
-            updatedAt: '2025-12-10T16:00:00'
-          }
-        ]);
+      try {
+        // Get current officer's email/ID from localStorage
+        const userEmail = localStorage.getItem('userEmail');
+        const userId = localStorage.getItem('userId');
+        
+        // Fetch all complaints from API
+        const response = await apiClient.getComplaints();
+        
+        if (response.success && response.data) {
+          // Filter complaints assigned to current officer
+          const allComplaints = response.data;
+          const assignedComplaints = allComplaints.filter(complaint => 
+            complaint.assignedTo === userId || 
+            complaint.assignedTo === userEmail ||
+            complaint.assignedTo === 'current-officer' // Fallback for mock data
+          );
+          
+          setComplaints(assignedComplaints);
+        }
+      } catch (error) {
+        console.error('Error fetching assigned complaints:', error);
+      } finally {
         setLoading(false);
-      }, 1000);
+      }
     };
 
     fetchComplaints();
@@ -197,9 +169,9 @@ export const AssignedComplaints: React.FC = () => {
         <div className="grid gap-4">
           {sortedComplaints.map((complaint) => (
             <Card
-              key={complaint.id}
+              key={complaint._id}
               className="p-6 hover:shadow-lg transition-shadow cursor-pointer"
-              onClick={() => navigate(`/transport/complaints/${complaint.id}`)}
+              onClick={() => navigate(`/transport/complaints/${complaint._id}`)}
             >
               <div className="flex justify-between items-start mb-4">
                 <div className="flex-1">
@@ -262,7 +234,7 @@ export const AssignedComplaints: React.FC = () => {
                     size="sm"
                     onClick={(e) => {
                       e.stopPropagation();
-                      navigate(`/transport/complaints/${complaint.id}`);
+                      navigate(`/transport/complaints/${complaint._id}`);
                     }}
                   >
                     Update Status
@@ -273,7 +245,7 @@ export const AssignedComplaints: React.FC = () => {
                   size="sm"
                   onClick={(e) => {
                     e.stopPropagation();
-                    navigate(`/transport/complaints/${complaint.id}`);
+                    navigate(`/transport/complaints/${complaint._id}`);
                   }}
                 >
                   View Details →

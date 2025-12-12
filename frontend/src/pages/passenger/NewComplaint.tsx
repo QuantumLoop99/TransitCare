@@ -25,11 +25,11 @@ export const NewComplaint: React.FC = () => {
       });
 
       if (response.success && response.data) {
-        setComplaintId(response.data.id);
+        setComplaintId(response.data._id);
         setSuccess(true);
 
         // Trigger AI prioritization
-        await apiClient.prioritizeComplaint(response.data.id);
+        await apiClient.prioritizeComplaint(response.data._id);
       } else {
         throw new Error(response.error || 'Failed to submit complaint');
       }

@@ -20,5 +20,8 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src"]
+  "include": ["frontend/src"],
+  "compilerOptions": {
+    "types": ["vite/client"]
+  }
 }

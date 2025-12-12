@@ -3,22 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
-import { Input } from '../../components/ui/Input';
+import { Input } from '../../components/ui/input';
 import { apiClient } from '../../lib/api';
-
-interface User {
-  _id: string;
-  email: string;
-  firstName?: string;
-  lastName?: string;
-  role: 'passenger' | 'officer' | 'admin';
-  createdAt: string;
-  status?: 'active' | 'inactive';
-}
+import type { User } from '../../types';
+type UserWithStatus = User & { status?: 'active' | 'inactive' };
 
 export const UserManagement: React.FC = () => {
   const navigate = useNavigate();
-  const [users, setUsers] = useState<User[]>([]);
+  const [users, setUsers] = useState<UserWithStatus[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterRole, setFilterRole] = useState<string>('all');
@@ -44,8 +36,8 @@ export const UserManagement: React.FC = () => {
   const filteredUsers = users.filter(user => {
     const matchesSearch = 
       user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.lastName.toLowerCase().includes(searchTerm.toLowerCase());
+      user.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.lastName?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesRole = filterRole === 'all' || user.role === filterRole;
     return matchesSearch && matchesRole;
   });
@@ -64,7 +56,7 @@ export const UserManagement: React.FC = () => {
       try {
         const response = await apiClient.deleteUser(userId);
         if (response.success) {
-          setUsers(users.filter(u => u._id !== userId));
+          setUsers(users.filter(u => u.id !== userId));
         } else {
           alert('Failed to delete user');
         }
@@ -180,7 +172,7 @@ export const UserManagement: React.FC = () => {
               </thead>
               <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
                 {filteredUsers.map((user) => (
-                  <tr key={user._id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
+                  <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900 dark:text-white">
                         {user.firstName && user.lastName 
@@ -210,7 +202,7 @@ export const UserManagement: React.FC = () => {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => navigate(`/admin/users/edit/${user._id}`)}
+                        onClick={() => navigate(`/admin/users/edit/${user.id}`)}
                         className="mr-2"
                       >
                         Edit
@@ -218,7 +210,7 @@ export const UserManagement: React.FC = () => {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handleDeleteUser(user._id)}
+                        onClick={() => handleDeleteUser(user.id)}
                         className="text-red-600 hover:text-red-700"
                       >
                         Delete

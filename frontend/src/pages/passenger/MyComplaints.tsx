@@ -66,14 +66,7 @@ useEffect(() => {
     }
   };
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'high': return 'error';
-      case 'medium': return 'warning';
-      case 'low': return 'default';
-      default: return 'default';
-    }
-  };
+  // Priority badge temporarily disabled; re-enable when needed.
 
   return (
     <div className="space-y-6">
