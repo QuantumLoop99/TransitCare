@@ -53,14 +53,12 @@ function App() {
   const { isSignedIn, user } = useUser();
   const { signOut } = useAuth();
   const [localUser, setLocalUser] = useState<LocalUser | null>(null);
-  const [loading, setLoading] = useState(false);
   const [onboardError, setOnboardError] = useState<string | null>(null);
 
   useEffect(() => {
     // When Clerk reports a signed-in user, call backend to onboard (upsert) and fetch local role
     async function onboard() {
       if (!isSignedIn || !user) return;
-      setLoading(true);
       setOnboardError(null);
       try {
         const payload = {
@@ -72,24 +70,45 @@ function App() {
 
         const onboarded = await fetchOnboardUser(payload);
         if (onboarded && onboarded.data) {
-          setLocalUser(onboarded.data);
+          const role = onboarded.data.role;
+          const normalizedRole: LocalUser['role'] = role === 'admin' || role === 'officer' ? role : 'passenger';
+          const normalizedUser: LocalUser = {
+            _id: onboarded.data._id,
+            email: onboarded.data.email,
+            firstName: onboarded.data.firstName,
+            lastName: onboarded.data.lastName,
+            role: normalizedRole,
+            clerkId: onboarded.data.clerkId,
+          };
+
+          setLocalUser(normalizedUser);
+          if (normalizedUser._id) {
+            localStorage.setItem('userId', normalizedUser._id);
+          }
+          if (normalizedUser.email || payload.email) {
+            localStorage.setItem('userEmail', normalizedUser.email || payload.email || '');
+          }
         }
       } catch (err) {
         console.error('Onboard failed', err);
-        const msg = err instanceof Error ? err.message : 'Unknown error';
         setOnboardError(`Failed to load profile. Please try again or contact support if the issue persists.`);
         
         // Use a default passenger role as fallback if backend fails
-        setLocalUser({
+        const fallbackUser: LocalUser = {
           _id: 'temp-' + user.id,
           email: user.primaryEmailAddress?.emailAddress || user.emailAddresses?.[0]?.emailAddress || '',
           firstName: user.firstName || '',
           lastName: user.lastName || '',
-          role: 'passenger', // Changed from 'passenger' to 'transport' for testing
+          role: 'passenger',
           clerkId: user.id
-        });
-      } finally {
-        setLoading(false);
+        };
+        setLocalUser(fallbackUser);
+        if (fallbackUser._id) {
+          localStorage.setItem('userId', fallbackUser._id);
+        }
+        if (fallbackUser.email) {
+          localStorage.setItem('userEmail', fallbackUser.email);
+        }
       }
     }
 
@@ -99,6 +118,8 @@ function App() {
   const handleSignOut = async () => {
     await signOut();
     setLocalUser(null);
+    localStorage.removeItem('userId');
+    localStorage.removeItem('userEmail');
   };
 
   return (

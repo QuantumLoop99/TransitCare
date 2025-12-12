@@ -20,19 +20,19 @@ export const AssignedComplaints: React.FC = () => {
         // Get current officer's email/ID from localStorage
         const userEmail = localStorage.getItem('userEmail');
         const userId = localStorage.getItem('userId');
-        
-        // Fetch all complaints from API
-        const response = await apiClient.getComplaints();
+        const assignees = [userId, userEmail].filter(Boolean);
+        const filters = assignees.length ? { assignedTo: assignees.join(','), limit: 1000 } : { limit: 1000 };
+
+        const response = await apiClient.getComplaints(filters);
         
         if (response.success && response.data) {
-          // Filter complaints assigned to current officer
-          const allComplaints = response.data;
-          const assignedComplaints = allComplaints.filter(complaint => 
-            complaint.assignedTo === userId || 
-            complaint.assignedTo === userEmail ||
-            complaint.assignedTo === 'current-officer' // Fallback for mock data
-          );
-          
+          const assignedComplaints = response.data.filter(complaint => {
+            const matchesAssignedUser = assignees.length
+              ? assignees.includes(String(complaint.assignedTo))
+              : false;
+            return matchesAssignedUser || complaint.assignedTo === 'current-officer';
+          });
+
           setComplaints(assignedComplaints);
         }
       } catch (error) {
@@ -228,18 +228,6 @@ export const AssignedComplaints: React.FC = () => {
               )}
 
               <div className="flex justify-end space-x-2">
-                {complaint.status !== 'resolved' && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      navigate(`/transport/complaints/${complaint._id}`);
-                    }}
-                  >
-                    Update Status
-                  </Button>
-                )}
                 <Button
                   variant="outline"
                   size="sm"
@@ -248,7 +236,7 @@ export const AssignedComplaints: React.FC = () => {
                     navigate(`/transport/complaints/${complaint._id}`);
                   }}
                 >
-                  View Details →
+                  Update Status
                 </Button>
               </div>
             </Card>
