@@ -29,26 +29,20 @@ export const PassengerDashboard: React.FC = () => {
   const fetchComplaints = async () => {
     setLoading(true);
     try {
-      // Fetch all complaints (or 3 max)
-      const response = await apiClient.getComplaints();
+      const userEmail = localStorage.getItem('userEmail'); // stored after login
+
+      const response = await apiClient.getComplaints({ userEmail });
+
       if (response.success && response.data) {
-        // Sort by creation date (newest first)
-        const sorted = [...response.data].sort(
-          (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        );
+        const complaints = response.data;
 
-        // Limit to the most recent 3
-        const recentComplaints = sorted.slice(0, 3);
-        setComplaints(recentComplaints);
+        // Calculate stats based only on user's complaints
+        const total = complaints.length;
+        const pending = complaints.filter(c => c.status === 'pending').length;
+        const inProgress = complaints.filter(c => c.status === 'in-progress').length;
+        const resolved = complaints.filter(c => c.status === 'resolved' || c.status === 'closed').length;
 
-        // Calculate stats
-        const total = response.data.length;
-        const pending = response.data.filter(c => c.status === 'pending').length;
-        const inProgress = response.data.filter(c => c.status === 'in-progress').length;
-        const resolved = response.data.filter(
-          c => c.status === 'resolved' || c.status === 'closed'
-        ).length;
-
+        setComplaints(complaints);
         setStats({ total, pending, inProgress, resolved });
       }
     } catch (error) {
