@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
-import { Input } from '../../components/ui/Input';
+import { Input } from '../../components/ui/input';
 import { apiClient } from '../../lib/api';
 import type { User } from '../../types';
 type UserWithStatus = User & { status?: 'active' | 'inactive' };
