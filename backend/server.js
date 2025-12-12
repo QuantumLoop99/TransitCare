@@ -29,8 +29,17 @@ process.on('uncaughtException', (err) => {
 
 // Middleware
 app.use(cors());
-app.use(json({ limit: '10mb' }));
+
+//Safe JSON parser that ignores empty bodies (fixes GET /api/users?role=officer)
+app.use((req, res, next) => {
+  if (req.method === 'GET' || req.method === 'DELETE') {
+    return next();
+  }
+  express.json({ limit: '10mb', strict: false })(req, res, next);
+});
+
 app.use(urlencoded({ extended: true }));
+
 
 // MongoDB Connection (safe)
 const MONGO_URI = process.env.MONGODB_URI;
@@ -367,15 +376,28 @@ app.get('/api/dashboard/stats', async (req, res) => {
 // Users
 app.get('/api/users', async (req, res) => {
   try {
-    if (!isDbConnected()) {
-      return res.json({ success: true, data: Array.from(memory.users.values()), meta: { storage: 'memory' } });
+    const { role } = req.query; // Read query parameter: ?role=officer
+
+    let query = {};
+    if (role) {
+      query.role = role; // Filter by role if provided
     }
-    const users = await User.find().select('-__v');
-    res.json({ success: true, data: users, meta: { storage: 'db' } });
+
+    const users = await User.find(query);
+
+    res.json({
+      success: true,
+      data: users,
+      meta: { count: users.length }
+    });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
   }
 });
+
 
 app.post('/api/users', async (req, res) => {
   try {

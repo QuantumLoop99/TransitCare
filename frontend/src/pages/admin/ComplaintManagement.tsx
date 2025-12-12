@@ -261,7 +261,7 @@ export const ComplaintManagement: React.FC = () => {
                   size="sm"
                   onClick={() => handleReassign(complaint._id)}
                 >
-                  Reassign
+                  Assign
                 </Button>
                 <Button
                   variant="outline"

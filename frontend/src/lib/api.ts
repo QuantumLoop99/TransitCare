@@ -75,8 +75,9 @@ class ApiClient {
   }
 
   // User endpoints
-  async getUsers(p0: { role: string; }): Promise<ApiResponse<User[]>> {
-    return this.request<User[]>('/users');
+  async getUsers(filters?: Record<string, any>): Promise<ApiResponse<User[]>> {
+    const query = filters ? `?${new URLSearchParams(filters).toString()}` : '';
+    return this.request<User[]>(`/users${query}`);
   }
 
   async createUser(data: Omit<User, 'id' | 'createdAt' | 'updatedAt'>): Promise<ApiResponse<User>> {
