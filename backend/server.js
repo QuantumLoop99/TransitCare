@@ -90,7 +90,7 @@ const complaintSchema = new Schema({
   location: String,
   attachments: [String],
   submittedBy: { type: String, required: true },
-  assignedTo: { type: Schema.Types.ObjectId, ref: 'User' },
+  assignedTo: String,
   resolution: String,
   resolutionNotes: String,
   resolutionDate: Date,
