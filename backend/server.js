@@ -29,8 +29,17 @@ process.on('uncaughtException', (err) => {
 
 // Middleware
 app.use(cors());
-app.use(json({ limit: '10mb' }));
+
+//Safe JSON parser that ignores empty bodies (fixes GET /api/users?role=officer)
+app.use((req, res, next) => {
+  if (req.method === 'GET' || req.method === 'DELETE') {
+    return next();
+  }
+  express.json({ limit: '10mb', strict: false })(req, res, next);
+});
+
 app.use(urlencoded({ extended: true }));
+
 
 // MongoDB Connection (safe)
 const MONGO_URI = process.env.MONGODB_URI;
@@ -259,6 +268,46 @@ app.put('/api/complaints/:id', async (req, res) => {
   }
 });
 
+// Assign or reassign complaint to an officer
+app.patch('/api/complaints/:id/assign', async (req, res) => {
+  try {
+    const { assignedTo, status } = req.body;
+
+    if (!assignedTo) {
+      return res.status(400).json({
+        success: false,
+        error: 'Officer ID (assignedTo) is required',
+      });
+    }
+
+    const complaint = await Complaint.findById(req.params.id);
+    if (!complaint) {
+      return res.status(404).json({
+        success: false,
+        error: 'Complaint not found',
+      });
+    }
+
+    // Update complaint
+    complaint.assignedTo = assignedTo;
+    complaint.status = status || 'in-progress';
+    await complaint.save();
+
+    res.json({
+      success: true,
+      data: complaint,
+      message: 'Complaint successfully reassigned',
+    });
+  } catch (error) {
+    console.error('Error assigning complaint:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Internal server error',
+    });
+  }
+});
+
+
 app.post('/api/complaints/:id/prioritize', async (req, res) => {
   try {
     const complaint = await Complaint.findById(req.params.id);
@@ -327,15 +376,28 @@ app.get('/api/dashboard/stats', async (req, res) => {
 // Users
 app.get('/api/users', async (req, res) => {
   try {
-    if (!isDbConnected()) {
-      return res.json({ success: true, data: Array.from(memory.users.values()), meta: { storage: 'memory' } });
+    const { role } = req.query; // Read query parameter: ?role=officer
+
+    let query = {};
+    if (role) {
+      query.role = role; // Filter by role if provided
     }
-    const users = await User.find().select('-__v');
-    res.json({ success: true, data: users, meta: { storage: 'db' } });
+
+    const users = await User.find(query);
+
+    res.json({
+      success: true,
+      data: users,
+      meta: { count: users.length }
+    });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
   }
 });
+
 
 app.post('/api/users', async (req, res) => {
   try {

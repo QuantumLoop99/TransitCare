@@ -70,7 +70,7 @@ export const ComplaintManagement: React.FC = () => {
   };
 
   const handleReassign = (complaintId: string) => {
-    navigate(`/admin/complaints/${complaintId}/reassign`);
+    navigate(`/admin/officers/${complaintId}`);
   };
 
   return (
@@ -261,7 +261,7 @@ export const ComplaintManagement: React.FC = () => {
                   size="sm"
                   onClick={() => handleReassign(complaint._id)}
                 >
-                  Reassign
+                  Assign
                 </Button>
                 <Button
                   variant="outline"
