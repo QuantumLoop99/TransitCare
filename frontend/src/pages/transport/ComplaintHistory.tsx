@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
-import { Input } from '../../components/ui/Input';
+import { Input } from '../../components/ui/input';
 import { Complaint } from '../../types';
+import { apiClient } from '../../lib/api';
 
 export const ComplaintHistory: React.FC = () => {
   const navigate = useNavigate();
@@ -13,46 +14,33 @@ export const ComplaintHistory: React.FC = () => {
   const [filterCategory, setFilterCategory] = useState<string>('all');
 
   useEffect(() => {
-    // TODO: Fetch complaint history from API
     const fetchHistory = async () => {
       setLoading(true);
-      setTimeout(() => {
-        setComplaints([
-          {
-            id: '3',
-            title: 'Dirty Bus Interior',
-            description: 'Bus is not properly cleaned',
-            category: 'cleanliness',
-            priority: 'low',
-            status: 'resolved',
-            vehicleNumber: '9012',
-            route: 'Route 7',
-            dateTime: '2025-12-09T08:00:00',
-            submittedBy: 'user-id-3',
-            assignedTo: 'current-officer',
-            resolution: 'Bus has been thoroughly cleaned and inspection scheduled',
-            createdAt: '2025-12-09T08:00:00',
-            updatedAt: '2025-12-10T16:00:00'
-          },
-          {
-            id: '4',
-            title: 'Delayed Bus Service',
-            description: 'Bus was 30 minutes late',
-            category: 'schedule',
-            priority: 'medium',
-            status: 'resolved',
-            vehicleNumber: '3456',
-            route: 'Route 23',
-            dateTime: '2025-12-08T07:30:00',
-            submittedBy: 'user-id-4',
-            assignedTo: 'current-officer',
-            resolution: 'Driver counseled about schedule adherence',
-            createdAt: '2025-12-08T07:30:00',
-            updatedAt: '2025-12-09T10:00:00'
-          }
-        ]);
+      try {
+        // Get current officer's email/ID from localStorage
+        const userEmail = localStorage.getItem('userEmail');
+        const userId = localStorage.getItem('userId');
+        
+        // Fetch all complaints from API
+        const response = await apiClient.getComplaints();
+        
+        if (response.success && response.data) {
+          // Filter for resolved/closed complaints assigned to current officer
+          const allComplaints = response.data;
+          const resolvedComplaints = allComplaints.filter(complaint => 
+            (complaint.assignedTo === userId || 
+             complaint.assignedTo === userEmail ||
+             complaint.assignedTo === 'current-officer') && // Fallback for mock data
+            (complaint.status === 'resolved' || complaint.status === 'closed')
+          );
+          
+          setComplaints(resolvedComplaints);
+        }
+      } catch (error) {
+        console.error('Error fetching complaint history:', error);
+      } finally {
         setLoading(false);
-      }, 1000);
+      }
     };
 
     fetchHistory();
@@ -136,9 +124,9 @@ export const ComplaintHistory: React.FC = () => {
           </p>
           {filteredComplaints.map((complaint) => (
             <Card
-              key={complaint.id}
+              key={complaint._id}
               className="p-6 hover:shadow-lg transition-shadow cursor-pointer"
-              onClick={() => navigate(`/transport/complaints/${complaint.id}`)}
+              onClick={() => navigate(`/transport/complaints/${complaint._id}`)}
             >
               <div className="flex justify-between items-start mb-4">
                 <div className="flex-1">
