@@ -223,10 +223,24 @@ export const ComplaintManagement: React.FC = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm mb-4">
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm mb-4">
                 <div>
                   <span className="text-gray-500 dark:text-gray-400">ID:</span>
                   <p className="font-medium text-gray-900 dark:text-white">#{complaint._id}</p>
+                </div>
+                <div>
+                  <span className="text-gray-500 dark:text-gray-400">Assigned To:</span>
+                  <p className="font-medium text-gray-900 dark:text-white truncate">
+                    {complaint.assignedTo ? (
+                      typeof complaint.assignedTo === 'object' ? (
+                        `${(complaint.assignedTo as any).firstName || ''} ${(complaint.assignedTo as any).lastName || ''}`
+                      ) : (
+                        'Officer'
+                      )
+                    ) : (
+                      <span className="text-yellow-600 dark:text-yellow-400">Unassigned</span>
+                    )}
+                  </p>
                 </div>
                 <div>
                   <span className="text-gray-500 dark:text-gray-400">Vehicle:</span>

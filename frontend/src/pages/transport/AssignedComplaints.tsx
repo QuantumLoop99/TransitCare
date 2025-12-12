@@ -17,20 +17,27 @@ export const AssignedComplaints: React.FC = () => {
     const fetchComplaints = async () => {
       setLoading(true);
       try {
-        // Get current officer's email/ID from localStorage
-        const userEmail = localStorage.getItem('userEmail');
+        // Get current officer's ID from localStorage
         const userId = localStorage.getItem('userId');
-        const assignees = [userId, userEmail].filter(Boolean);
-        const filters = assignees.length ? { assignedTo: assignees.join(','), limit: 1000 } : { limit: 1000 };
+        
+        // Only use userId for filtering as backend expects ObjectId
+        const filters = userId ? { assignedTo: userId, limit: 1000 } : { limit: 1000 };
 
         const response = await apiClient.getComplaints(filters);
         
         if (response.success && response.data) {
           const assignedComplaints = response.data.filter(complaint => {
-            const matchesAssignedUser = assignees.length
-              ? assignees.includes(String(complaint.assignedTo))
-              : false;
-            return matchesAssignedUser || complaint.assignedTo === 'current-officer';
+            if (!complaint.assignedTo) return false;
+            
+            // Handle both string ID and populated object
+            const assignedToId = typeof complaint.assignedTo === 'object' 
+              ? (complaint.assignedTo as any)._id || (complaint.assignedTo as any).id 
+              : complaint.assignedTo;
+
+            // Check if assigned to current user
+            const isAssignedToUser = userId && assignedToId === userId;
+
+            return isAssignedToUser || complaint.assignedTo === 'current-officer';
           });
 
           setComplaints(assignedComplaints);
