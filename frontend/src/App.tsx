@@ -53,7 +53,7 @@ function App() {
   const { isSignedIn, user } = useUser();
   const { signOut } = useAuth();
   const [localUser, setLocalUser] = useState<LocalUser | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [, setLoading] = useState(false);
   const [onboardError, setOnboardError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -76,7 +76,6 @@ function App() {
         }
       } catch (err) {
         console.error('Onboard failed', err);
-        const msg = err instanceof Error ? err.message : 'Unknown error';
         setOnboardError(`Failed to load profile. Please try again or contact support if the issue persists.`);
         
         // Use a default passenger role as fallback if backend fails
