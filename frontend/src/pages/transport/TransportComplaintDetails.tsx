@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
-import { Input } from '../../components/ui/Input';
+import { Input } from '../../components/ui/input';
 import { Complaint } from '../../types';
 
 interface Message {
@@ -31,7 +31,7 @@ export const TransportComplaintDetails: React.FC = () => {
       setLoading(true);
       setTimeout(() => {
         const complaintData: Complaint = {
-          id: id || '1',
+          _id: id || '1',
           title: 'Broken AC in Bus #1234',
           description: 'The air conditioning is not working properly.',
           category: 'facilities',
@@ -182,7 +182,7 @@ export const TransportComplaintDetails: React.FC = () => {
             <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
               Complaint ID
             </h3>
-            <p className="text-gray-900 dark:text-white font-mono">#{complaint.id}</p>
+            <p className="text-gray-900 dark:text-white font-mono">#{complaint._id}</p>
           </div>
           <div>
             <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
