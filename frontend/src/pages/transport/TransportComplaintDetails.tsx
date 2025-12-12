@@ -5,6 +5,7 @@ import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/input';
 import { Complaint } from '../../types';
+import { apiClient } from '../../lib/api';
 
 interface Message {
   id: string;
@@ -22,45 +23,29 @@ export const TransportComplaintDetails: React.FC = () => {
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
   const [resolutionNotes, setResolutionNotes] = useState('');
-  const [selectedStatus, setSelectedStatus] = useState('');
+  const [selectedStatus, setSelectedStatus] = useState<Complaint['status']>('pending');
   const [uploadedDocuments, setUploadedDocuments] = useState<File[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // TODO: Fetch complaint details from API
     const fetchComplaint = async () => {
+      if (!id) return;
       setLoading(true);
-      setTimeout(() => {
-        const complaintData: Complaint = {
-          _id: id || '1',
-          title: 'Broken AC in Bus #1234',
-          description: 'The air conditioning is not working properly.',
-          category: 'facilities',
-          priority: 'high',
-          status: 'in-progress',
-          vehicleNumber: '1234',
-          route: 'Route 45',
-          dateTime: '2025-12-10T10:30:00',
-          location: 'Main Street Station',
-          submittedBy: 'user-id',
-          assignedTo: 'current-officer',
-          createdAt: '2025-12-10T10:30:00',
-          updatedAt: '2025-12-11T08:00:00'
-        };
-        setComplaint(complaintData);
-        setSelectedStatus(complaintData.status);
-
-        setMessages([
-          {
-            id: '1',
-            sender: 'passenger',
-            senderName: 'John Doe',
-            message: 'The AC has been broken for 3 days now. It\'s very uncomfortable.',
-            timestamp: '2025-12-10T11:00:00'
-          }
-        ]);
-
+      setError(null);
+      try {
+        const response = await apiClient.getComplaint(id);
+        if (response.success && response.data) {
+          setComplaint(response.data);
+          setSelectedStatus(response.data.status);
+        } else {
+          setError(response.error || 'Failed to load complaint');
+        }
+      } catch (err) {
+        console.error('Error fetching complaint', err);
+        setError('Failed to load complaint');
+      } finally {
         setLoading(false);
-      }, 1000);
+      }
     };
 
     fetchComplaint();
@@ -84,12 +69,20 @@ export const TransportComplaintDetails: React.FC = () => {
 
   const handleStatusUpdate = async () => {
     if (!selectedStatus) return;
+    if (!complaint) return;
 
-    // TODO: Update status in API
-    if (complaint) {
-      setComplaint({ ...complaint, status: selectedStatus as any });
+    try {
+      const response = await apiClient.updateComplaint(complaint._id, { status: selectedStatus });
+      if (response.success && response.data) {
+        setComplaint(response.data);
+        alert('Status updated successfully!');
+      } else {
+        alert(response.error || 'Failed to update status');
+      }
+    } catch (err) {
+      console.error('Error updating status', err);
+      alert('Failed to update status');
     }
-    alert('Status updated successfully!');
   };
 
   const handleSubmitResolution = async () => {
@@ -97,16 +90,25 @@ export const TransportComplaintDetails: React.FC = () => {
       alert('Please provide resolution notes');
       return;
     }
+    if (!complaint) return;
 
-    // TODO: Submit resolution to API
-    if (complaint) {
-      setComplaint({
-        ...complaint,
+    try {
+      const response = await apiClient.updateComplaint(complaint._id, {
         status: 'resolved',
-        resolution: resolutionNotes
+        resolution: resolutionNotes,
       });
+
+      if (response.success && response.data) {
+        setComplaint(response.data);
+        setSelectedStatus('resolved');
+        alert('Resolution submitted successfully!');
+      } else {
+        alert(response.error || 'Failed to submit resolution');
+      }
+    } catch (err) {
+      console.error('Error submitting resolution', err);
+      alert('Failed to submit resolution');
     }
-    alert('Resolution submitted successfully!');
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -141,11 +143,11 @@ export const TransportComplaintDetails: React.FC = () => {
     );
   }
 
-  if (!complaint) {
+  if (error || !complaint) {
     return (
       <div className="text-center py-12">
         <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-          Complaint Not Found
+          {error || 'Complaint Not Found'}
         </h2>
         <Button onClick={() => navigate('/transport/complaints')}>
           Back to Complaints
@@ -244,7 +246,7 @@ export const TransportComplaintDetails: React.FC = () => {
             </label>
             <select
               value={selectedStatus}
-              onChange={(e) => setSelectedStatus(e.target.value)}
+              onChange={(e) => setSelectedStatus(e.target.value as Complaint['status'])}
               className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             >
               <option value="pending">Pending</option>

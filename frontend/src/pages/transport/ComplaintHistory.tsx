@@ -20,17 +20,16 @@ export const ComplaintHistory: React.FC = () => {
         // Get current officer's email/ID from localStorage
         const userEmail = localStorage.getItem('userEmail');
         const userId = localStorage.getItem('userId');
-        
-        // Fetch all complaints from API
-        const response = await apiClient.getComplaints();
+        const assignees = [userId, userEmail].filter(Boolean);
+        const filters = assignees.length ? { assignedTo: assignees.join(','), limit: 1000 } : { limit: 1000 };
+
+        const response = await apiClient.getComplaints(filters);
         
         if (response.success && response.data) {
           // Filter for resolved/closed complaints assigned to current officer
-          const allComplaints = response.data;
-          const resolvedComplaints = allComplaints.filter(complaint => 
-            (complaint.assignedTo === userId || 
-             complaint.assignedTo === userEmail ||
-             complaint.assignedTo === 'current-officer') && // Fallback for mock data
+          const resolvedComplaints = response.data.filter(complaint => 
+            ((assignees.length ? assignees.includes(String(complaint.assignedTo)) : false) ||
+             complaint.assignedTo === 'current-officer') &&
             (complaint.status === 'resolved' || complaint.status === 'closed')
           );
           
