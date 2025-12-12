@@ -8,14 +8,12 @@ export const ReportsAnalytics: React.FC = () => {
   const [selectedReport, setSelectedReport] = useState<string>('trends');
   const [dateRange, setDateRange] = useState<'week' | 'month' | 'year'>('month');
   const [complaints, setComplaints] = useState<Complaint[]>([]);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchComplaints();
   }, []);
 
   const fetchComplaints = async () => {
-    setLoading(true);
     try {
       const response = await apiClient.getComplaints();
       if (response.success && response.data) {
@@ -23,8 +21,6 @@ export const ReportsAnalytics: React.FC = () => {
       }
     } catch (error) {
       console.error('Error fetching complaints:', error);
-    } finally {
-      setLoading(false);
     }
   };
 
