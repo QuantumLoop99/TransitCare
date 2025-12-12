@@ -8,7 +8,7 @@
 import express, { json, urlencoded } from 'express';
 import cors from 'cors';
 import mongoose from 'mongoose';
-const { connect, Schema, model, connection: mongooseConnection } = mongoose;
+const { connect, Schema, model, connection: mongooseConnection, Types } = mongoose;
 import jwt from 'jsonwebtoken';
 import OpenAI from 'openai';
 import fetch from 'node-fetch';
@@ -90,7 +90,7 @@ const complaintSchema = new Schema({
   location: String,
   attachments: [String],
   submittedBy: { type: String, required: true },
-  assignedTo: String,
+  assignedTo: { type: Schema.Types.ObjectId, ref: 'User' },
   resolution: String,
   aiAnalysis: {
     priority: String,
@@ -207,6 +207,7 @@ app.get('/api/complaints', async (req, res) => {
     if (userEmail) filter.submittedBy = userEmail; // restrict by owner
 
     const complaints = await Complaint.find(filter)
+      .populate('assignedTo', 'firstName lastName')
       .sort({ [sort]: order === 'desc' ? -1 : 1 })
       .limit(parseInt(limit));
 
@@ -242,7 +243,7 @@ app.post('/api/complaints', async (req, res) => {
 
 app.get('/api/complaints/:id', async (req, res) => {
   try {
-    const complaint = await Complaint.findById(req.params.id);
+    const complaint = await Complaint.findById(req.params.id).populate('assignedTo', 'firstName lastName');
     if (!complaint) {
       return res.status(404).json({ success: false, error: 'Complaint not found' });
     }
@@ -258,7 +259,7 @@ app.put('/api/complaints/:id', async (req, res) => {
       req.params.id,
       req.body,
       { new: true }
-    );
+    ).populate('assignedTo', 'firstName lastName');
     if (!complaint) {
       return res.status(404).json({ success: false, error: 'Complaint not found' });
     }
@@ -288,10 +289,19 @@ app.patch('/api/complaints/:id/assign', async (req, res) => {
       });
     }
 
+    // Convert assignedTo to ObjectId if it's a valid string ID
+    let officerId = assignedTo;
+    if (typeof assignedTo === 'string' && Types.ObjectId.isValid(assignedTo)) {
+      officerId = new Types.ObjectId(assignedTo);
+    }
+
     // Update complaint
-    complaint.assignedTo = assignedTo;
+    complaint.assignedTo = officerId;
     complaint.status = status || 'in-progress';
     await complaint.save();
+
+    // Populate assignedTo before sending response
+    await complaint.populate('assignedTo', 'firstName lastName');
 
     res.json({
       success: true,
@@ -594,6 +604,34 @@ app.get('/api/health', (req, res) => {
     dbConnected: isDbConnected(),
     timestamp: new Date().toISOString()
   });
+});
+
+// Migration endpoint: Convert string assignedTo to ObjectId references
+app.post('/api/migrate/fix-assigned-to', async (req, res) => {
+  try {
+    const complaints = await Complaint.find({ assignedTo: { $type: 'string' } });
+    let updated = 0;
+
+    for (const complaint of complaints) {
+      if (Types.ObjectId.isValid(complaint.assignedTo)) {
+        complaint.assignedTo = new Types.ObjectId(complaint.assignedTo);
+        await complaint.save();
+        updated++;
+      }
+    }
+
+    res.json({
+      success: true,
+      message: `Successfully migrated ${updated} complaints`,
+      updated
+    });
+  } catch (error) {
+    console.error('Migration error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
 });
 
 // Error handling middleware

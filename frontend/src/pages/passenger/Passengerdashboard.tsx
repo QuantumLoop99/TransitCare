@@ -237,7 +237,11 @@ export const PassengerDashboard: React.FC = () => {
                         {complaint.assignedTo && (
                           <div className="flex items-center gap-1.5">
                             <User className="w-3.5 h-3.5 flex-shrink-0" />
-                            <span className="truncate max-w-[140px]">{complaint.assignedTo}</span>
+                            <span className="truncate max-w-[140px]">
+                              {typeof complaint.assignedTo === 'object' 
+                                ? `${(complaint.assignedTo as any).firstName || ''} ${(complaint.assignedTo as any).lastName || ''}`.trim()
+                                : complaint.assignedTo}
+                            </span>
                           </div>
                         )}
                       </div>
