@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Users, FileText, UserCheck, TrendingUp, Clock, CheckCircle } from 'lucide-react';
 import { Card, CardHeader, CardContent } from '../../components/ui/Card';
 import { StatCard } from '../../components/dashboard/StatCard';
@@ -7,6 +8,7 @@ import { apiClient } from '../../lib/api';
 import { Complaint, DashboardStats } from '../../types';
 
 export const AdminDashboard: React.FC = () => {
+  const navigate = useNavigate();
   const [recentComplaints, setRecentComplaints] = useState<Complaint[]>([]);
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -192,7 +194,10 @@ export const AdminDashboard: React.FC = () => {
       <div>
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-semibold text-gray-900">Recent Complaints</h2>
-          <button className="text-blue-600 hover:text-blue-700 font-medium">
+          <button 
+            className="text-blue-600 hover:text-blue-700 font-medium"
+            onClick={() => navigate('/admin/complaints')}
+          >
             View All Complaints
           </button>
         </div>

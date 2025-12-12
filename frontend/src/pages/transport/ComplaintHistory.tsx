@@ -17,21 +17,29 @@ export const ComplaintHistory: React.FC = () => {
     const fetchHistory = async () => {
       setLoading(true);
       try {
-        // Get current officer's email/ID from localStorage
-        const userEmail = localStorage.getItem('userEmail');
+        // Get current officer's ID from localStorage
         const userId = localStorage.getItem('userId');
-        const assignees = [userId, userEmail].filter(Boolean);
-        const filters = assignees.length ? { assignedTo: assignees.join(','), limit: 1000 } : { limit: 1000 };
+        
+        // Only use userId for filtering as backend expects ObjectId
+        const filters = userId ? { assignedTo: userId, limit: 1000 } : { limit: 1000 };
 
         const response = await apiClient.getComplaints(filters);
         
         if (response.success && response.data) {
           // Filter for resolved/closed complaints assigned to current officer
-          const resolvedComplaints = response.data.filter(complaint => 
-            ((assignees.length ? assignees.includes(String(complaint.assignedTo)) : false) ||
-             complaint.assignedTo === 'current-officer') &&
-            (complaint.status === 'resolved' || complaint.status === 'closed')
-          );
+          const resolvedComplaints = response.data.filter(complaint => {
+            if (!complaint.assignedTo) return false;
+
+            // Handle both string ID and populated object
+            const assignedToId = typeof complaint.assignedTo === 'object' 
+              ? (complaint.assignedTo as any)._id || (complaint.assignedTo as any).id 
+              : complaint.assignedTo;
+
+            const isAssigned = (userId && assignedToId === userId) || complaint.assignedTo === 'current-officer';
+            const isResolved = complaint.status === 'resolved' || complaint.status === 'closed';
+            
+            return isAssigned && isResolved;
+          });
           
           setComplaints(resolvedComplaints);
         }
