@@ -198,13 +198,26 @@ async function prioritizeComplaint(complaint) {
 // Complaints
 app.get('/api/complaints', async (req, res) => {
   try {
-    const { limit = 10, sort = 'createdAt', order = 'desc', status, priority, category, userEmail } = req.query;
+    const { limit = 10, sort = 'createdAt', order = 'desc', status, priority, category, userEmail, assignedTo } = req.query;
     
     const filter = {};
     if (status) filter.status = status;
     if (priority) filter.priority = priority;
     if (category) filter.category = category;
     if (userEmail) filter.submittedBy = userEmail; // restrict by owner
+    if (assignedTo) {
+      const ids = Array.isArray(assignedTo)
+        ? assignedTo
+        : String(assignedTo)
+            .split(',')
+            .map(id => id.trim())
+            .filter(Boolean);
+      if (ids.length === 1) {
+        filter.assignedTo = ids[0];
+      } else if (ids.length > 1) {
+        filter.assignedTo = { $in: ids };
+      }
+    }
 
     const complaints = await Complaint.find(filter)
       .populate('assignedTo', 'firstName lastName')

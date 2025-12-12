@@ -20,19 +20,20 @@ export const TransportDashboard: React.FC = () => {
         // Get current officer's email/ID from localStorage
         const userEmail = localStorage.getItem('userEmail');
         const userId = localStorage.getItem('userId');
-        
-        // Fetch all complaints from API
-        const response = await apiClient.getComplaints();
+        const assignees = [userId, userEmail].filter(Boolean);
+        const filters = assignees.length ? { assignedTo: assignees.join(','), limit: 1000 } : { limit: 1000 };
+
+        // Fetch complaints for this officer (or mock fallback)
+        const response = await apiClient.getComplaints(filters);
         
         if (response.success && response.data) {
-          // Filter complaints assigned to current officer
-          const allComplaints = response.data;
-          const assignedComplaints = allComplaints.filter(complaint => 
-            complaint.assignedTo === userId || 
-            complaint.assignedTo === userEmail ||
-            complaint.assignedTo === 'current-officer' // Fallback for mock data
-          );
-          
+          const assignedComplaints = response.data.filter(complaint => {
+            const matchesAssignedUser = assignees.length
+              ? assignees.includes(String(complaint.assignedTo))
+              : false;
+            return matchesAssignedUser || complaint.assignedTo === 'current-officer';
+          });
+
           // Calculate statistics from assigned complaints only
           const totalComplaints = assignedComplaints.length;
           const pendingComplaints = assignedComplaints.filter(c => c.status === 'pending').length;
