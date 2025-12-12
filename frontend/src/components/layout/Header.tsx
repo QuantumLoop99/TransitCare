@@ -1,7 +1,7 @@
 import React from 'react';
 import { useUser as useClerkUser } from '@clerk/clerk-react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Bus, LogOut, Settings, User } from 'lucide-react';
+import { Bus, LogOut, User } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { ThemeToggle } from '../ui/ThemeToggle';
 

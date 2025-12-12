@@ -1,5 +1,4 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
 import { Eye, Calendar, MapPin, User } from 'lucide-react';
 import { Card, CardContent } from '../ui/Card';
 import { Badge, StatusBadge, PriorityBadge } from '../ui/Badge';
