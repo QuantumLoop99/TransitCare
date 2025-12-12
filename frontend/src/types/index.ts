@@ -23,6 +23,8 @@ export interface Complaint {
   submittedBy: string;
   assignedTo?: string;
   resolution?: string;
+  resolutionNotes?: string;
+  resolutionDate?: string;
   aiAnalysis?: {
     priority: string;
     sentiment: number;

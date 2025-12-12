@@ -92,6 +92,8 @@ const complaintSchema = new Schema({
   submittedBy: { type: String, required: true },
   assignedTo: String,
   resolution: String,
+  resolutionNotes: String,
+  resolutionDate: Date,
   aiAnalysis: {
     priority: String,
     sentiment: Number,

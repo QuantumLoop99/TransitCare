@@ -219,11 +219,20 @@ export const AssignedComplaints: React.FC = () => {
                 </div>
               </div>
 
-              {complaint.resolution && (
-                <div className="mb-4 p-3 bg-green-50 dark:bg-green-900/20 rounded-md">
-                  <p className="text-sm text-gray-700 dark:text-gray-300">
-                    <strong>Resolution:</strong> {complaint.resolution}
+              {complaint.status === 'resolved' && (
+                <div className="mb-4 p-3 bg-green-50 dark:bg-green-900/20 rounded-md border border-green-200 dark:border-green-800">
+                  <p className="text-xs font-semibold text-green-700 dark:text-green-400 mb-1">
+                    ✓ RESOLVED
                   </p>
+                  {(complaint.resolution || complaint.resolutionNotes) ? (
+                    <p className="text-sm text-gray-700 dark:text-gray-300 line-clamp-2">
+                      {complaint.resolution || complaint.resolutionNotes}
+                    </p>
+                  ) : (
+                    <p className="text-sm text-gray-600 dark:text-gray-400 italic">
+                      No resolution notes provided
+                    </p>
+                  )}
                 </div>
               )}
 

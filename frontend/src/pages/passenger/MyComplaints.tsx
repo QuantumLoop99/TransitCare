@@ -217,6 +217,23 @@ useEffect(() => {
                 </div>
               </div>
 
+              {complaint.status === 'resolved' && (
+                <div className="mt-4 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+                  <p className="text-xs font-semibold text-green-700 dark:text-green-400 mb-1">
+                    ✓ RESOLVED
+                  </p>
+                  {(complaint.resolution || complaint.resolutionNotes) ? (
+                    <p className="text-sm text-gray-900 dark:text-white line-clamp-2">
+                      {complaint.resolution || complaint.resolutionNotes}
+                    </p>
+                  ) : (
+                    <p className="text-sm text-gray-600 dark:text-gray-400 italic">
+                      No resolution notes provided
+                    </p>
+                  )}
+                </div>
+              )}
+
               <div className="mt-4 flex justify-end">
                 <Button 
                   variant="outline" 

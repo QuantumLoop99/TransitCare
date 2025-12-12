@@ -247,6 +247,34 @@ export const ComplaintDetails: React.FC = () => {
         </div>
       </Card>
 
+      {/* Resolution Notes - Display for resolved complaints */}
+      {complaint.status === 'resolved' && (
+        <Card className="p-6">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center">
+            <span className="text-green-600 dark:text-green-400 mr-2">✓</span>
+            Resolution Notes
+          </h2>
+          <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+            {(complaint.resolution || complaint.resolutionNotes) ? (
+              <>
+                <p className="text-gray-900 dark:text-white whitespace-pre-wrap mb-3">
+                  {complaint.resolution || complaint.resolutionNotes}
+                </p>
+                {complaint.resolutionDate && (
+                  <p className="text-sm text-gray-600 dark:text-gray-400 pt-3 border-t border-green-200 dark:border-green-800">
+                    Resolved on {new Date(complaint.resolutionDate).toLocaleString()}
+                  </p>
+                )}
+              </>
+            ) : (
+              <p className="text-gray-600 dark:text-gray-400">
+                This complaint has been resolved.
+              </p>
+            )}
+          </div>
+        </Card>
+      )}
+
       {/* Messages */}
       <Card className="p-6">
         <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Messages</h2>
