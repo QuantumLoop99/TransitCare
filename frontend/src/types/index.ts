@@ -18,6 +18,7 @@ export interface Complaint {
   vehicleNumber?: string;
   route?: string;
   dateTime: string;
+  incidentTime?: string;
   location?: string;
   attachments?: string[];
   submittedBy: string;

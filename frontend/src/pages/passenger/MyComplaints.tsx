@@ -215,6 +215,16 @@ useEffect(() => {
                     {new Date(complaint.createdAt).toLocaleDateString()}
                   </p>
                 </div>
+                {complaint.assignedTo && (
+                  <div>
+                    <span className="text-gray-500 dark:text-gray-400">Assigned To:</span>
+                    <p className="font-medium text-gray-900 dark:text-white">
+                      {typeof complaint.assignedTo === 'object' 
+                        ? `${(complaint.assignedTo as any).firstName || ''} ${(complaint.assignedTo as any).lastName || ''}`.trim()
+                        : complaint.assignedTo}
+                    </p>
+                  </div>
+                )}
               </div>
 
               <div className="mt-4 flex justify-end">

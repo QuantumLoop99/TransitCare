@@ -189,6 +189,18 @@ export const ComplaintDetails: React.FC = () => {
               {new Date(complaint.dateTime).toLocaleString()}
             </p>
           </div>
+          {complaint.assignedTo && (
+            <div>
+              <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
+                Assigned To
+              </h3>
+              <p className="text-gray-900 dark:text-white">
+                {typeof complaint.assignedTo === 'object' 
+                  ? `${(complaint.assignedTo as any).firstName || ''} ${(complaint.assignedTo as any).lastName || ''}`.trim()
+                  : complaint.assignedTo}
+              </p>
+            </div>
+          )}
         </div>
 
         <div className="mb-6">
