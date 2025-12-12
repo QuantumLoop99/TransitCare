@@ -109,7 +109,11 @@ export const ComplaintList: React.FC<ComplaintListProps> = ({
               {showAssignee && complaint.assignedTo && (
                 <div className="flex items-center text-xs text-gray-500">
                   <User className="w-3 h-3 mr-1" />
-                  <span>Assigned to: {complaint.assignedTo}</span>
+                  <span>
+                    Assigned to: {typeof complaint.assignedTo === 'object' 
+                      ? `${(complaint.assignedTo as any).firstName || ''} ${(complaint.assignedTo as any).lastName || ''}`.trim()
+                      : complaint.assignedTo}
+                  </span>
                 </div>
               )}
 

@@ -53,7 +53,7 @@ function App() {
   const { isSignedIn, user } = useUser();
   const { signOut } = useAuth();
   const [localUser, setLocalUser] = useState<LocalUser | null>(null);
-  const [, setLoading] = useState(false);
+  const [] = useState(false);
   const [onboardError, setOnboardError] = useState<string | null>(null);
 
   useEffect(() => {
