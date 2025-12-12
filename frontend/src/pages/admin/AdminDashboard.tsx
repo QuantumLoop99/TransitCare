@@ -19,7 +19,7 @@ export const AdminDashboard: React.FC = () => {
     setLoading(true);
     try {
       const [complaintsResponse, statsResponse] = await Promise.all([
-        apiClient.getComplaints({ limit: 6, sort: 'createdAt', order: 'desc' }),
+        apiClient.getComplaints({ limit: 3, sort: 'createdAt', order: 'desc' }),
         apiClient.getDashboardStats(),
       ]);
 
