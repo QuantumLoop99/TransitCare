@@ -36,8 +36,26 @@ export const TransportDashboard: React.FC = () => {
 
           // Calculate statistics from assigned complaints only
           const totalComplaints = assignedComplaints.length;
-          const pendingComplaints = assignedComplaints.filter(c => c.status === 'pending').length;
-          const resolvedComplaints = assignedComplaints.filter(c => c.status === 'resolved' || c.status === 'closed').length;
+          const inProgressComplaints = assignedComplaints.filter(c => c.status === 'in-progress').length;
+          const resolvedComplaintsList = assignedComplaints.filter(c => c.status === 'resolved' || c.status === 'closed');
+          const resolvedComplaints = resolvedComplaintsList.length;
+          
+          // Calculate average resolution time from actual data
+          let averageResolutionTime = 0;
+          if (resolvedComplaintsList.length > 0) {
+            const resolutionTimes = resolvedComplaintsList
+              .filter(c => c.resolutionDate || c.updatedAt)
+              .map(c => {
+                const createdDate = new Date(c.createdAt).getTime();
+                const resolvedDate = new Date(c.resolutionDate || c.updatedAt).getTime();
+                return (resolvedDate - createdDate) / (1000 * 60 * 60 * 24); // Convert to days
+              });
+            
+            if (resolutionTimes.length > 0) {
+              const totalDays = resolutionTimes.reduce((sum, days) => sum + days, 0);
+              averageResolutionTime = Math.round((totalDays / resolutionTimes.length) * 10) / 10; // Round to 1 decimal
+            }
+          }
           
           // Calculate priority breakdown
           const priorityBreakdown = {
@@ -48,9 +66,9 @@ export const TransportDashboard: React.FC = () => {
           
           setStats({
             totalComplaints,
-            pendingComplaints,
+            pendingComplaints: inProgressComplaints,
             resolvedComplaints,
-            averageResolutionTime: 2.5, // TODO: Calculate from actual resolution times
+            averageResolutionTime,
             priorityBreakdown
           });
           
@@ -117,7 +135,7 @@ export const TransportDashboard: React.FC = () => {
             icon="📋"
           />
           <StatCard
-            title="Pending Action"
+            title="In Progress"
             value={stats.pendingComplaints}
             icon="⏳"
           />

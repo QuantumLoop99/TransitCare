@@ -100,6 +100,8 @@ export const TransportComplaintDetails: React.FC = () => {
       const response = await apiClient.updateComplaint(complaint._id, {
         status: 'resolved',
         resolution: resolutionNotes,
+        resolutionNotes: resolutionNotes,
+        resolutionDate: new Date().toISOString(),
       });
 
       if (response.success && response.data) {
@@ -269,7 +271,7 @@ export const TransportComplaintDetails: React.FC = () => {
       )}
 
       {/* Resolution - Show form for active complaints, read-only for resolved */}
-      {!isReadOnly ? (
+      {complaint.status !== 'resolved' && !isReadOnly ? (
         <Card className="p-6">
           <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
             Add Resolution
@@ -312,31 +314,36 @@ export const TransportComplaintDetails: React.FC = () => {
             </Button>
           </div>
         </Card>
-      ) : (
-        complaint.resolution && (
-          <Card className="p-6">
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
-              Resolution Details
-            </h2>
-            <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
-              <div className="flex items-start space-x-2 mb-3">
-                <span className="text-green-600 dark:text-green-400 text-xl">✓</span>
-                <div className="flex-1">
-                  <p className="text-sm font-semibold text-green-700 dark:text-green-400 mb-2">
-                    This complaint has been resolved
-                  </p>
-                  <p className="text-gray-900 dark:text-white whitespace-pre-wrap">
-                    {complaint.resolution}
-                  </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-3">
-                    Resolved on {new Date(complaint.updatedAt).toLocaleString()}
-                  </p>
-                </div>
+      ) : complaint.status === 'resolved' ? (
+        <Card className="p-6">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center">
+            <span className="text-green-600 dark:text-green-400 mr-2">✓</span>
+            Resolution Details
+          </h2>
+          <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800 space-y-4">
+            {(complaint.resolution || complaint.resolutionNotes) && (
+              <div>
+                <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
+                  Resolution Notes
+                </h3>
+                <p className="text-gray-900 dark:text-white whitespace-pre-wrap">
+                  {complaint.resolution || complaint.resolutionNotes}
+                </p>
               </div>
-            </div>
-          </Card>
-        )
-      )}
+            )}
+            {complaint.resolutionDate && (
+              <p className="text-sm text-gray-600 dark:text-gray-400 pt-2 border-t border-green-200 dark:border-green-800">
+                Resolved on {new Date(complaint.resolutionDate).toLocaleString()}
+              </p>
+            )}
+            {!(complaint.resolution || complaint.resolutionNotes) && !complaint.resolutionDate && (
+              <p className="text-gray-600 dark:text-gray-400">
+                This complaint has been marked as resolved.
+              </p>
+            )}
+          </div>
+        </Card>
+      ) : null}
 
       {/* Chat with Passenger - Hide in read-only mode */}
       {!isReadOnly && (
