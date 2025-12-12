@@ -125,7 +125,7 @@ export const ComplaintHistory: React.FC = () => {
             <Card
               key={complaint._id}
               className="p-6 hover:shadow-lg transition-shadow cursor-pointer"
-              onClick={() => navigate(`/transport/complaints/${complaint._id}`)}
+              onClick={() => navigate(`/transport/complaints/${complaint._id}?readonly=true`)}
             >
               <div className="flex justify-between items-start mb-4">
                 <div className="flex-1">

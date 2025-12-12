@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
@@ -18,6 +18,7 @@ interface Message {
 export const TransportComplaintDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [complaint, setComplaint] = useState<Complaint | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
@@ -26,6 +27,9 @@ export const TransportComplaintDetails: React.FC = () => {
   const [selectedStatus, setSelectedStatus] = useState<Complaint['status']>('pending');
   const [uploadedDocuments, setUploadedDocuments] = useState<File[]>([]);
   const [error, setError] = useState<string | null>(null);
+
+  // Determine if complaint is in read-only mode (from history page)
+  const isReadOnly = searchParams.get('readonly') === 'true';
 
   useEffect(() => {
     const fetchComplaint = async () => {
@@ -234,36 +238,38 @@ export const TransportComplaintDetails: React.FC = () => {
         </div>
       </Card>
 
-      {/* Update Status */}
-      <Card className="p-6">
-        <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
-          Update Status
-        </h2>
-        <div className="grid md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Change Status
-            </label>
-            <select
-              value={selectedStatus}
-              onChange={(e) => setSelectedStatus(e.target.value as Complaint['status'])}
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-            >
-              <option value="pending">Pending</option>
-              <option value="in-progress">In Progress</option>
-              <option value="resolved">Resolved</option>
-            </select>
+      {/* Update Status - Only show if not in read-only mode */}
+      {!isReadOnly && (
+        <Card className="p-6">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
+            Update Status
+          </h2>
+          <div className="grid md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Change Status
+              </label>
+              <select
+                value={selectedStatus}
+                onChange={(e) => setSelectedStatus(e.target.value as Complaint['status'])}
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              >
+                <option value="pending">Pending</option>
+                <option value="in-progress">In Progress</option>
+                <option value="resolved">Resolved</option>
+              </select>
+            </div>
+            <div className="flex items-end">
+              <Button onClick={handleStatusUpdate} className="w-full">
+                Update Status
+              </Button>
+            </div>
           </div>
-          <div className="flex items-end">
-            <Button onClick={handleStatusUpdate} className="w-full">
-              Update Status
-            </Button>
-          </div>
-        </div>
-      </Card>
+        </Card>
+      )}
 
-      {/* Resolution */}
-      {complaint.status !== 'resolved' && (
+      {/* Resolution - Show form for active complaints, read-only for resolved */}
+      {!isReadOnly ? (
         <Card className="p-6">
           <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
             Add Resolution
@@ -306,10 +312,35 @@ export const TransportComplaintDetails: React.FC = () => {
             </Button>
           </div>
         </Card>
+      ) : (
+        complaint.resolution && (
+          <Card className="p-6">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
+              Resolution Details
+            </h2>
+            <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+              <div className="flex items-start space-x-2 mb-3">
+                <span className="text-green-600 dark:text-green-400 text-xl">✓</span>
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-green-700 dark:text-green-400 mb-2">
+                    This complaint has been resolved
+                  </p>
+                  <p className="text-gray-900 dark:text-white whitespace-pre-wrap">
+                    {complaint.resolution}
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-3">
+                    Resolved on {new Date(complaint.updatedAt).toLocaleString()}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </Card>
+        )
       )}
 
-      {/* Chat with Passenger */}
-      <Card className="p-6">
+      {/* Chat with Passenger - Hide in read-only mode */}
+      {!isReadOnly && (
+        <Card className="p-6">
         <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
           Communication with Passenger
         </h2>
@@ -352,6 +383,7 @@ export const TransportComplaintDetails: React.FC = () => {
           <Button onClick={handleSendMessage}>Send</Button>
         </div>
       </Card>
+      )}
     </div>
   );
 };
