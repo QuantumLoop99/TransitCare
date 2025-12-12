@@ -137,7 +137,7 @@ export const PassengerDashboard: React.FC = () => {
 
         {/* Hide priority in ComplaintList */}
         <ComplaintList
-          complaints={complaints}
+          complaints={complaints.slice(0, 3)}
           loading={loading}
           onViewDetails={handleViewDetails}
           showPriority={false} 
