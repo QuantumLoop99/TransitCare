@@ -105,7 +105,7 @@ export const ComplaintDetails: React.FC = () => {
     try {
       const res = await apiClient.postComplaintMessage(id, {
         sender: 'passenger',
-        senderId: localStorage.getItem('userId') || '',
+        senderId: localStorage.getItem('userId') || undefined,
         message: optimistic.message,
       });
 
@@ -368,14 +368,24 @@ export const ComplaintDetails: React.FC = () => {
           >
             <p className="font-semibold text-sm mb-1">
               {(() => {
-                const currentUserId = localStorage.getItem('userId');
-                if (msg.senderId && currentUserId && msg.senderId === currentUserId) {
-                  return 'You';
-                }
-                if (msg.senderName) return msg.senderName;
-                if (msg.sender === 'passenger') return 'Passenger';
+                const currentUserId = localStorage.getItem('userId') || undefined;
+                const currentEmail = localStorage.getItem('userEmail') || undefined;
+
+                // True if this message is authored by the current passenger:
+                const authoredByMe =
+                  // prefer id match when present
+                  (msg.senderId && currentUserId && msg.senderId === currentUserId) ||
+                  // fallback: if it's a passenger message and the complaint belongs to my email
+                  (msg.sender === 'passenger' &&
+                    complaint?.submittedBy &&
+                    currentEmail &&
+                    complaint.submittedBy === currentEmail);
+
+                if (authoredByMe) return 'You';
+                if (msg.senderName?.trim()) return msg.senderName;
                 if (msg.sender === 'officer') return 'Officer';
-                return 'System';
+                if (msg.sender === 'admin') return 'Admin';
+                return 'Passenger';
               })()}
             </p>
 

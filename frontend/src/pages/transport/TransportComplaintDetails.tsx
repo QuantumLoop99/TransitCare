@@ -94,8 +94,8 @@ export const TransportComplaintDetails: React.FC = () => {
     try {
       await apiClient.postComplaintMessage(id, {
         sender: 'officer',
-        senderId: officerId,
-        message: newMessage,
+        senderId: localStorage.getItem('userId') || undefined,
+        message: newMessage.trim(),
       });
     } catch (err) {
       console.error('Error sending message:', err);
@@ -247,7 +247,30 @@ export const TransportComplaintDetails: React.FC = () => {
                     }`}
                   >
                     <p className="font-semibold text-sm mb-1">
-                      {msg.senderName || (msg.sender === 'officer' ? 'Officer' : 'Passenger')}
+                      {(() => {
+                        const currentUserId = localStorage.getItem('userId') || undefined;
+                        const currentEmail = localStorage.getItem('userEmail') || undefined;
+
+                        const assignedOfficerEmail =
+                          complaint && typeof complaint.assignedTo === 'object'
+                            ? (complaint.assignedTo as any).email
+                            : undefined;
+
+                        // Detect if this message was sent by *me*
+                        const authoredByMe =
+                          (msg.senderId && currentUserId && msg.senderId === currentUserId) ||
+                          (msg.sender === 'officer' &&
+                            currentEmail &&
+                            assignedOfficerEmail &&
+                            currentEmail === assignedOfficerEmail) ||
+                          (msg.senderName === 'You'); // Check for optimistic local messages
+
+                        if (authoredByMe) return 'You';
+                        if (msg.senderName?.trim() && msg.senderName !== 'You') return msg.senderName;
+                        if (msg.sender === 'passenger') return 'Passenger';
+                        if (msg.sender === 'admin') return 'Admin';
+                        return 'Officer';
+                      })()}
                     </p>
                     <p>{msg.message}</p>
                     <p className="text-xs mt-1 opacity-75">
@@ -258,6 +281,7 @@ export const TransportComplaintDetails: React.FC = () => {
               ))
             )}
           </div>
+
 
           <div className="flex space-x-2">
             <Input
