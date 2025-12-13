@@ -564,11 +564,21 @@ app.get('/api/dashboard/stats', async (req, res) => {
 // Users
 app.get('/api/users', async (req, res) => {
   try {
-    const { role } = req.query; // Read query parameter: ?role=officer
+    const { role, id, email, _id } = req.query; // Read query parameters
 
     let query = {};
     if (role) {
       query.role = role; // Filter by role if provided
+    }
+    if (id) {
+      // Filter by MongoDB ID or email
+      query.$or = [{ _id: id }, { email: id }];
+    }
+    if (email) {
+      query.email = email;
+    }
+    if (_id) {
+      query._id = _id;
     }
 
     const users = await User.find(query);
@@ -583,6 +593,32 @@ app.get('/api/users', async (req, res) => {
       success: false,
       error: error.message
     });
+  }
+});
+
+// Get single user by ID or email
+app.get('/api/users/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Try to find by MongoDB ID first, then by email
+    let user = null;
+    
+    if (Types.ObjectId.isValid(id)) {
+      user = await User.findById(id);
+    }
+    
+    if (!user) {
+      user = await User.findOne({ email: id });
+    }
+
+    if (!user) {
+      return res.status(404).json({ success: false, error: 'User not found' });
+    }
+
+    res.json({ success: true, data: user });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 
