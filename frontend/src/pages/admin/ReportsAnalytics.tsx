@@ -37,9 +37,32 @@ export const ReportsAnalytics: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
-  // Categories for filtering
-  const categories = ['all', 'bus-delay', 'poor-service', 'overcrowding', 'safety', 'cleanliness', 'other'];
+  // Categories for filtering - matching complaint form categories
+  const categories = [
+    'all', 
+    'service', 
+    'safety', 
+    'accessibility', 
+    'cleanliness', 
+    'staff', 
+    'vehicle', 
+    'schedule', 
+    'other'
+  ];
   const statuses = ['all', 'pending', 'in-progress', 'resolved', 'closed'];
+
+  // Category labels for display
+  const categoryLabels: Record<string, string> = {
+    'all': 'All Categories',
+    'service': 'Service Quality',
+    'safety': 'Safety Concern', 
+    'accessibility': 'Accessibility',
+    'cleanliness': 'Cleanliness',
+    'staff': 'Staff Behavior',
+    'vehicle': 'Vehicle Condition',
+    'schedule': 'Schedule/Timing',
+    'other': 'Other'
+  };
 
   useEffect(() => {
     fetchData();
@@ -282,7 +305,7 @@ export const ReportsAnalytics: React.FC = () => {
             >
               {categories.map(category => (
                 <option key={category} value={category}>
-                  {category === 'all' ? 'All Categories' : category.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+                  {categoryLabels[category]}
                 </option>
               ))}
             </select>
@@ -408,7 +431,7 @@ export const ReportsAnalytics: React.FC = () => {
                   <div className="space-y-2 mb-6">
                     {Object.entries(analytics.categoryBreakdown).map(([category, count]) => (
                       <div key={category} className="flex items-center justify-between p-2">
-                        <span className="capitalize text-gray-700 dark:text-gray-300">{category}</span>
+                        <span className="text-gray-700 dark:text-gray-300">{categoryLabels[category] || category}</span>
                         <div className="flex items-center space-x-2">
                           <div className="w-32 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                             <div
@@ -432,7 +455,7 @@ export const ReportsAnalytics: React.FC = () => {
                       <PieChart>
                         <Pie
                           data={Object.entries(analytics.categoryBreakdown).map(([category, count]) => ({
-                            name: category,
+                            name: categoryLabels[category] || category,
                             value: count
                           }))}
                           cx="50%"
