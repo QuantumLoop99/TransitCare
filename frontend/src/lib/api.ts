@@ -96,6 +96,15 @@ getComplaintFeedback(complaintId: string) {
     return this.request<{ success: boolean }>(`/users/${id}`, { method: 'DELETE' });
   }
 
+  // 🔹 Officer Stats
+  getOfficerStats(officerId: string) {
+    return this.request<{
+      totalAssignedComplaints: number;
+      resolvedComplaints: number;
+      averageRating: number;
+    }>(`/users/${officerId}/stats`);
+  }
+
   // 🔹 Dashboard
   getDashboardStats(params?: Record<string, any>) {
     const q = params ? `?${new URLSearchParams(params).toString()}` : '';

@@ -15,6 +15,7 @@ interface Officer {
     resolved: number;
     rating: number;
   };
+  statsLoading?: boolean;
 }
 
 export const OfficerAssignment: React.FC = () => {
@@ -23,34 +24,65 @@ export const OfficerAssignment: React.FC = () => {
   const [officers, setOfficers] = useState<Officer[]>([]);
   const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
+  useEffect(() => {
     const fetchOfficers = async () => {
-        try {
+      try {
         const response = await apiClient.getUsers({ role: 'officer' });
         if (response.success && response.data) {
-            const officersWithStats: Officer[] = response.data.map((user: any) => ({
+          const officersWithStats: Officer[] = response.data.map((user: any) => ({
             _id: user._id,
             firstName: user.firstName,
             lastName: user.lastName,
             email: user.email,
             stats: {
-                assigned: 0,   // default placeholder
-                resolved: 0,   // until backend stats added
-                rating: 0,     // default or computed later
+              assigned: 0,
+              resolved: 0,
+              rating: 0,
             },
-            }));
+            statsLoading: true,
+          }));
 
-            setOfficers(officersWithStats);
+          setOfficers(officersWithStats);
+          
+          // Fetch stats for each officer
+          await fetchOfficersStats(officersWithStats);
         }
-        } catch (error) {
+      } catch (error) {
         console.error('Error fetching officers:', error);
-        } finally {
+      } finally {
         setLoading(false);
-        }
+      }
     };
     fetchOfficers();
-    }, []);
+  }, []);
 
+  const fetchOfficersStats = async (officersList: Officer[]) => {
+    const statsPromises = officersList.map(async (officer) => {
+      try {
+        const statsResponse = await apiClient.getOfficerStats(officer._id);
+        if (statsResponse.success && statsResponse.data) {
+          return {
+            ...officer,
+            stats: {
+              assigned: statsResponse.data.totalAssignedComplaints,
+              resolved: statsResponse.data.resolvedComplaints,
+              rating: statsResponse.data.averageRating,
+            },
+            statsLoading: false,
+          };
+        }
+      } catch (error) {
+        console.error(`Error fetching stats for officer ${officer._id}:`, error);
+      }
+      return {
+        ...officer,
+        statsLoading: false,
+      };
+    });
+
+    const updatedOfficers = await Promise.all(statsPromises);
+    setOfficers(updatedOfficers);
+  };
 
   const handleAssign = async (officerId: string) => {
     try {
@@ -60,6 +92,35 @@ export const OfficerAssignment: React.FC = () => {
       });
 
       if (response.success) {
+        // Refresh stats for the assigned officer to show updated counts
+        const updatedOfficers = [...officers];
+        const officerIndex = updatedOfficers.findIndex(o => o._id === officerId);
+        
+        if (officerIndex !== -1) {
+          updatedOfficers[officerIndex].statsLoading = true;
+          setOfficers(updatedOfficers);
+          
+          try {
+            const statsResponse = await apiClient.getOfficerStats(officerId);
+            if (statsResponse.success && statsResponse.data) {
+              updatedOfficers[officerIndex] = {
+                ...updatedOfficers[officerIndex],
+                stats: {
+                  assigned: statsResponse.data.totalAssignedComplaints,
+                  resolved: statsResponse.data.resolvedComplaints,
+                  rating: statsResponse.data.averageRating,
+                },
+                statsLoading: false,
+              };
+              setOfficers(updatedOfficers);
+            }
+          } catch (error) {
+            console.error('Error refreshing officer stats:', error);
+            updatedOfficers[officerIndex].statsLoading = false;
+            setOfficers(updatedOfficers);
+          }
+        }
+        
         alert('Complaint successfully reassigned!');
         navigate('/admin/complaints');
       } else {
@@ -90,11 +151,34 @@ export const OfficerAssignment: React.FC = () => {
             </h2>
             <p className="text-gray-500 dark:text-gray-400">{officer.email}</p>
             <div className="mt-4 space-y-1 text-sm">
-              <p>Assigned: <Badge variant="info">{officer.stats.assigned}</Badge></p>
-              <p>Resolved: <Badge variant="success">{officer.stats.resolved}</Badge></p>
-              <p>Rating: ⭐ {officer.stats.rating.toFixed(1)}</p>
+              {officer.statsLoading ? (
+                <div className="space-y-2">
+                  <p className="flex items-center">
+                    <span>Assigned: </span>
+                    <div className="ml-2 w-8 h-4 bg-gray-200 animate-pulse rounded"></div>
+                  </p>
+                  <p className="flex items-center">
+                    <span>Resolved: </span>
+                    <div className="ml-2 w-8 h-4 bg-gray-200 animate-pulse rounded"></div>
+                  </p>
+                  <p className="flex items-center">
+                    <span>Rating: </span>
+                    <div className="ml-2 w-12 h-4 bg-gray-200 animate-pulse rounded"></div>
+                  </p>
+                </div>
+              ) : (
+                <>
+                  <p>Assigned: <Badge variant="info">{officer.stats.assigned}</Badge></p>
+                  <p>Resolved: <Badge variant="success">{officer.stats.resolved}</Badge></p>
+                  <p>Rating: ⭐ {officer.stats.rating > 0 ? officer.stats.rating.toFixed(1) : 'No ratings yet'}</p>
+                </>
+              )}
             </div>
-            <Button className="mt-4 w-full" onClick={() => handleAssign(officer._id)}>
+            <Button 
+              className="mt-4 w-full" 
+              onClick={() => handleAssign(officer._id)}
+              disabled={officer.statsLoading}
+            >
               Assign Complaint
             </Button>
           </Card>
