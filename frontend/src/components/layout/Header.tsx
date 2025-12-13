@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useUser as useClerkUser } from '@clerk/clerk-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Bus, LogOut, User } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { ThemeToggle } from '../ui/ThemeToggle';
+import { apiClient } from '../../lib/api';
 
 interface HeaderProps {
   user?: {
@@ -18,9 +19,60 @@ interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({ user, onSignOut }) => {
   const navigate = useNavigate();
   const { user: clerkUser } = useClerkUser();
+  const [hasUnread, setHasUnread] = useState(false);
 
   const linkClass =
     'px-3 py-2 rounded-full text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-300 dark:hover:text-white dark:hover:bg-gray-800 transition-colors';
+
+  // Check for unread notifications for passengers only
+  useEffect(() => {
+    if (user && user.role === 'passenger') {
+      const checkUnreadNotifications = async () => {
+        const userEmail = localStorage.getItem('userEmail');
+        if (!userEmail) {
+          setHasUnread(false);
+          return;
+        }
+
+        try {
+          const response = await apiClient.getNotifications(userEmail, false);
+          
+          if (response.success && response.data) {
+            const unreadNotifications = response.data.filter((n: any) => !n.isRead);
+            setHasUnread(unreadNotifications.length > 0);
+          } else {
+            setHasUnread(false);
+          }
+        } catch (err) {
+          console.error('Error checking notifications:', err);
+          setHasUnread(false);
+        }
+      };
+
+      // Check immediately when component mounts or user changes
+      checkUnreadNotifications();
+      
+      // Poll for new notifications every 10 seconds
+      const interval = setInterval(checkUnreadNotifications, 10000);
+      
+      // Check when page becomes visible (e.g., user returns from notifications page)
+      const handleVisibilityChange = () => {
+        if (!document.hidden) {
+          checkUnreadNotifications();
+        }
+      };
+      
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+      
+      return () => {
+        clearInterval(interval);
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
+      };
+    } else {
+      // Not a passenger, ensure dot is hidden
+      setHasUnread(false);
+    }
+  }, [user]);
 
   const handleSignOut = () => {
     onSignOut?.();
@@ -66,8 +118,13 @@ export const Header: React.FC<HeaderProps> = ({ user, onSignOut }) => {
                     <Link to="/passenger/complaints/new" className={linkClass}>
                       New Complaint
                     </Link>
-                    <Link to="/passenger/notifications" className={linkClass}>
-                      Notifications
+                    <Link to="/passenger/notifications" className="relative inline-block">
+                      <span className={linkClass}>
+                        Notifications
+                      </span>
+                      {hasUnread && (
+                        <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-red-500 border-2 border-white dark:border-gray-900 animate-pulse" />
+                      )}
                     </Link>
                   </>
                 )}

@@ -128,8 +128,26 @@ const userSchema = new Schema({
   timestamps: true,
 });
 
+const notificationSchema = new Schema({
+  userId: { type: String, required: true },
+  complaintId: { type: Schema.Types.ObjectId, ref: 'Complaint', required: true },
+  type: { type: String, enum: ['status_change', 'new_message', 'resolved'], required: true },
+  title: { type: String, required: true },
+  message: { type: String, required: true },
+  isRead: { type: Boolean, default: false },
+  metadata: {
+    oldStatus: String,
+    newStatus: String,
+    senderName: String,
+    senderRole: String,
+  },
+}, {
+  timestamps: true,
+});
+
 const Complaint = model('Complaint', complaintSchema);
 const User = model('User', userSchema);
+const Notification = model('Notification', notificationSchema);
 
 // In-memory fallback for dev when DB is unavailable
 const memory = {
@@ -198,10 +216,15 @@ async function prioritizeComplaint(complaint) {
     const analysis = JSON.parse(completion.choices[0].message.content);
     return analysis;
   } catch (error) {
-    console.error('OpenAI API error:', error);
+    // Only log non-quota errors in detail
+    if (error.code === 'insufficient_quota' || error.status === 429) {
+      console.warn('OpenAI API quota exceeded, using default priority');
+    } else {
+      console.error('OpenAI API error:', error.message || error);
+    }
     return {
       priority: 'medium',
-      reasoning: 'AI analysis failed, using default priority',
+      reasoning: 'AI analysis unavailable, using default priority',
       sentiment: 0,
       confidence: 0,
     };
@@ -283,14 +306,33 @@ app.get('/api/complaints/:id', async (req, res) => {
 
 app.put('/api/complaints/:id', async (req, res) => {
   try {
+    const oldComplaint = await Complaint.findById(req.params.id);
+    if (!oldComplaint) {
+      return res.status(404).json({ success: false, error: 'Complaint not found' });
+    }
+    
     const complaint = await Complaint.findByIdAndUpdate(
       req.params.id,
       req.body,
       { new: true }
     ).populate('assignedTo', 'firstName lastName');
-    if (!complaint) {
-      return res.status(404).json({ success: false, error: 'Complaint not found' });
+    
+    // Create notification if status changed
+    if (req.body.status && oldComplaint.status !== req.body.status) {
+      const notification = new Notification({
+        userId: oldComplaint.submittedBy,
+        complaintId: oldComplaint._id,
+        type: req.body.status === 'resolved' || req.body.status === 'closed' ? 'resolved' : 'status_change',
+        title: `Complaint Status Updated`,
+        message: `Your complaint "${oldComplaint.title}" status changed from ${oldComplaint.status} to ${req.body.status}`,
+        metadata: {
+          oldStatus: oldComplaint.status,
+          newStatus: req.body.status,
+        },
+      });
+      await notification.save();
     }
+    
     res.json({ success: true, data: complaint });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
@@ -318,6 +360,25 @@ app.post('/api/complaints/:id/messages', async (req, res) => {
     const savedComplaint = await Complaint.findById(req.params.id)
       .select({ messages: { $slice: -1 } })
       .populate('messages.senderId', 'firstName lastName role');
+
+    // Create notification if officer sent the message to passenger
+    if (sender === 'officer' || sender === 'admin') {
+      const senderUser = await User.findById(senderId);
+      const senderName = senderUser ? `${senderUser.firstName} ${senderUser.lastName}` : 'Officer';
+      
+      const notification = new Notification({
+        userId: complaint.submittedBy,
+        complaintId: complaint._id,
+        type: 'new_message',
+        title: 'New Message on Your Complaint',
+        message: `${senderName} sent a message on your complaint "${complaint.title}"`,
+        metadata: {
+          senderName: senderName,
+          senderRole: sender,
+        },
+      });
+      await notification.save();
+    }
 
     res.json({ success: true, data: savedComplaint.messages[0] });
   } catch (error) {
@@ -575,11 +636,12 @@ app.post('/api/users/onboard', async (req, res) => {
       return res.json({ success: true, data: updated, meta: { storage: 'memory' } });
     }
 
-    // Try to find existing user first
-    let user = await User.findOne({ clerkId });
+    // Try to find existing user by clerkId OR email
+    let user = await User.findOne({ $or: [{ clerkId }, { email }] });
     
     if (user) {
       // Update existing user
+      user.clerkId = clerkId; // Update clerkId in case user was found by email only
       user.email = email;
       user.firstName = firstName || user.firstName || '';
       user.lastName = lastName || user.lastName || '';
@@ -597,7 +659,23 @@ app.post('/api/users/onboard', async (req, res) => {
 
     res.json({ success: true, data: user, meta: { storage: 'db' } });
   } catch (error) {
-    console.error('Onboard error:', error.message, error.stack);
+    // Handle duplicate key error specifically
+    if (error.code === 11000) {
+      console.warn('Duplicate key error during onboard, attempting to find and update existing user');
+      try {
+        const user = await User.findOne({ email: req.body.email });
+        if (user) {
+          user.clerkId = req.body.clerkId;
+          user.firstName = req.body.firstName || user.firstName || '';
+          user.lastName = req.body.lastName || user.lastName || '';
+          await user.save();
+          return res.json({ success: true, data: user, meta: { storage: 'db', recovered: true } });
+        }
+      } catch (recoveryError) {
+        console.error('Recovery failed:', recoveryError.message);
+      }
+    }
+    console.error('Onboard error:', error.message);
     res.status(500).json({ success: false, error: error.message || 'Unknown error' });
   }
 });
@@ -672,6 +750,88 @@ app.post('/api/admin/create-user', requireAdmin, async (req, res) => {
   }
 });
 
+
+// Notifications
+app.get('/api/notifications', async (req, res) => {
+  try {
+    const { userEmail, unreadOnly } = req.query;
+
+    if (!userEmail) {
+      return res.status(400).json({ success: false, error: 'userEmail is required' });
+    }
+
+    const filter = { userId: userEmail };
+    if (unreadOnly === 'true') {
+      filter.isRead = false;
+    }
+
+    const notifications = await Notification.find(filter)
+      .populate('complaintId', 'title status')
+      .sort({ createdAt: -1 })
+      .limit(50);
+
+    const unreadCount = await Notification.countDocuments({ userId: userEmail, isRead: false });
+
+    res.json({ 
+      success: true, 
+      data: notifications,
+      unreadCount 
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+app.patch('/api/notifications/:id/read', async (req, res) => {
+  try {
+    const notification = await Notification.findByIdAndUpdate(
+      req.params.id,
+      { isRead: true },
+      { new: true }
+    );
+
+    if (!notification) {
+      return res.status(404).json({ success: false, error: 'Notification not found' });
+    }
+
+    res.json({ success: true, data: notification });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+app.patch('/api/notifications/mark-all-read', async (req, res) => {
+  try {
+    const { userEmail } = req.body;
+
+    if (!userEmail) {
+      return res.status(400).json({ success: false, error: 'userEmail is required' });
+    }
+
+    await Notification.updateMany(
+      { userId: userEmail, isRead: false },
+      { isRead: true }
+    );
+
+    res.json({ success: true, message: 'All notifications marked as read' });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+app.delete('/api/notifications/:id', async (req, res) => {
+  try {
+    const notification = await Notification.findByIdAndDelete(req.params.id);
+
+    if (!notification) {
+      return res.status(404).json({ success: false, error: 'Notification not found' });
+    }
+
+    res.json({ success: true, message: 'Notification deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
 
 // Reports
 app.get('/api/reports/:type', async (req, res) => {
