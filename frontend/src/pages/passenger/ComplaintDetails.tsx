@@ -478,7 +478,7 @@ export const ComplaintDetails: React.FC = () => {
         <Card className="p-6">
           <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center">
             <span className="text-blue-600 dark:text-blue-400 mr-2">💬</span>
-            Passenger Feedback
+            Passenger's Feedback
           </h2>
           <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
             <div className="flex items-center mb-3">
