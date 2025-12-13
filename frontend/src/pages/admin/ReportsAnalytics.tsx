@@ -192,9 +192,360 @@ export const ReportsAnalytics: React.FC = () => {
 
   const analytics = calculateAnalytics();
 
-  const handleExport = (format: 'pdf' | 'excel') => {
-    // TODO: Implement export functionality
-    alert(`Exporting as ${format.toUpperCase()}...`);
+  const handleExport = async (format: 'pdf' | 'excel') => {
+    if (format === 'pdf') {
+      try {
+        await generatePDFReport();
+      } catch (error) {
+        console.error('Error generating PDF:', error);
+        alert('Failed to export PDF. Please try again.');
+      }
+    } else {
+      // CSV export
+      try {
+        const csvContent = generateCSVContent();
+        downloadFile(csvContent, `TransitCare_Report_${dateRange}_${new Date().toISOString().split('T')[0]}.csv`, 'text/csv');
+      } catch (error) {
+        console.error('Error generating CSV:', error);
+        alert('Failed to export CSV. Please try again.');
+      }
+    }
+  };
+
+  const generatePDFReport = async (): Promise<void> => {
+    // Create a new window with the report content
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      alert('Please allow pop-ups to download PDF');
+      return;
+    }
+
+    const analytics = calculateAnalytics();
+    const currentDate = new Date().toLocaleDateString();
+    
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>TransitCare Analytics Report</title>
+          <style>
+            body { 
+              font-family: Arial, sans-serif; 
+              margin: 40px; 
+              line-height: 1.6; 
+              color: #333;
+            }
+            .header { 
+              text-align: center; 
+              border-bottom: 3px solid #3B82F6; 
+              padding-bottom: 20px; 
+              margin-bottom: 30px; 
+            }
+            .header h1 { 
+              color: #3B82F6; 
+              margin: 0; 
+              font-size: 28px; 
+            }
+            .meta-info { 
+              background: #f8f9fa; 
+              padding: 15px; 
+              border-radius: 8px; 
+              margin-bottom: 30px; 
+            }
+            .section { 
+              margin-bottom: 30px; 
+            }
+            .section h2 { 
+              color: #374151; 
+              border-bottom: 2px solid #E5E7EB; 
+              padding-bottom: 10px; 
+              margin-bottom: 15px; 
+            }
+            .stats-grid { 
+              display: grid; 
+              grid-template-columns: repeat(3, 1fr); 
+              gap: 20px; 
+              margin-bottom: 30px; 
+            }
+            .stat-card { 
+              background: #f8f9fa; 
+              padding: 20px; 
+              border-radius: 8px; 
+              text-align: center; 
+              border: 1px solid #e9ecef; 
+            }
+            .stat-number { 
+              font-size: 32px; 
+              font-weight: bold; 
+              color: #3B82F6; 
+            }
+            .stat-label { 
+              color: #6b7280; 
+              margin-top: 5px; 
+            }
+            table { 
+              width: 100%; 
+              border-collapse: collapse; 
+              margin-bottom: 20px; 
+            }
+            th, td { 
+              padding: 12px; 
+              text-align: left; 
+              border-bottom: 1px solid #e9ecef; 
+            }
+            th { 
+              background-color: #f8f9fa; 
+              font-weight: bold; 
+              color: #374151; 
+            }
+            .progress-bar { 
+              background: #e9ecef; 
+              height: 8px; 
+              border-radius: 4px; 
+              overflow: hidden; 
+              margin: 5px 0; 
+            }
+            .progress-fill { 
+              background: #3B82F6; 
+              height: 100%; 
+              transition: width 0.3s ease; 
+            }
+            .footer { 
+              text-align: center; 
+              margin-top: 40px; 
+              padding-top: 20px; 
+              border-top: 1px solid #e9ecef; 
+              color: #6b7280; 
+              font-size: 14px; 
+            }
+            @media print {
+              body { margin: 20px; }
+              .header { border-bottom-color: #000; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>TransitCare Analytics Report</h1>
+            <p>Comprehensive Complaint Management Analytics</p>
+          </div>
+
+          <div class="meta-info">
+            <strong>Generated:</strong> ${currentDate} | 
+            <strong>Period:</strong> ${dateRange.toUpperCase()} | 
+            <strong>Report Type:</strong> ${selectedReport.toUpperCase()}
+          </div>
+
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-number">${analytics.totalComplaints}</div>
+              <div class="stat-label">Total Complaints</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-number">${analytics.resolvedComplaints}</div>
+              <div class="stat-label">Resolved</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-number">${analytics.resolutionRate}%</div>
+              <div class="stat-label">Resolution Rate</div>
+            </div>
+          </div>
+
+          <div class="section">
+            <h2>Complaints by Category</h2>
+            <table>
+              <thead>
+                <tr>
+                  <th>Category</th>
+                  <th>Count</th>
+                  <th>Percentage</th>
+                  <th>Distribution</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${Object.entries(analytics.categoryBreakdown)
+                  .sort(([,a], [,b]) => b - a)
+                  .map(([category, count]) => {
+                    const percentage = ((count / analytics.totalComplaints) * 100).toFixed(1);
+                    return `
+                      <tr>
+                        <td style="text-transform: capitalize;">${category}</td>
+                        <td>${count}</td>
+                        <td>${percentage}%</td>
+                        <td>
+                          <div class="progress-bar">
+                            <div class="progress-fill" style="width: ${percentage}%"></div>
+                          </div>
+                        </td>
+                      </tr>
+                    `;
+                  }).join('')}
+              </tbody>
+            </table>
+          </div>
+
+          <div class="section">
+            <h2>Priority Distribution</h2>
+            <table>
+              <thead>
+                <tr>
+                  <th>Priority Level</th>
+                  <th>Count</th>
+                  <th>Percentage</th>
+                  <th>Distribution</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${['high', 'medium', 'low'].map(priority => {
+                  const count = analytics.priorityBreakdown[priority] || 0;
+                  const percentage = analytics.totalComplaints > 0 ? ((count / analytics.totalComplaints) * 100).toFixed(1) : '0';
+                  return `
+                    <tr>
+                      <td style="text-transform: capitalize;">${priority}</td>
+                      <td>${count}</td>
+                      <td>${percentage}%</td>
+                      <td>
+                        <div class="progress-bar">
+                          <div class="progress-fill" style="width: ${percentage}%; background: ${priority === 'high' ? '#EF4444' : priority === 'medium' ? '#F59E0B' : '#10B981'}"></div>
+                        </div>
+                      </td>
+                    </tr>
+                  `;
+                }).join('')}
+              </tbody>
+            </table>
+          </div>
+
+          <div class="section">
+            <h2>Status Breakdown</h2>
+            <table>
+              <thead>
+                <tr>
+                  <th>Status</th>
+                  <th>Count</th>
+                  <th>Percentage</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${Object.entries(analytics.statusBreakdown)
+                  .sort(([,a], [,b]) => b - a)
+                  .map(([status, count]) => {
+                    const percentage = ((count / analytics.totalComplaints) * 100).toFixed(1);
+                    return `
+                      <tr>
+                        <td style="text-transform: capitalize;">${status.replace('-', ' ')}</td>
+                        <td>${count}</td>
+                        <td>${percentage}%</td>
+                      </tr>
+                    `;
+                  }).join('')}
+              </tbody>
+            </table>
+          </div>
+
+          ${analytics.monthlyTrends.length > 0 ? `
+          <div class="section">
+            <h2>Monthly Trends</h2>
+            <table>
+              <thead>
+                <tr>
+                  <th>Period</th>
+                  <th>Complaints</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${analytics.monthlyTrends.map((trend: any) => `
+                  <tr>
+                    <td>${trend.period}</td>
+                    <td>${trend.count}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+          ` : ''}
+
+          ${analytics.resolutionTimes.length > 0 ? `
+          <div class="section">
+            <h2>Average Resolution Times</h2>
+            <table>
+              <thead>
+                <tr>
+                  <th>Priority</th>
+                  <th>Average Hours</th>
+                  <th>Resolved Count</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${analytics.resolutionTimes.map((rt: any) => `
+                  <tr>
+                    <td style="text-transform: capitalize;">${rt.priority}</td>
+                    <td>${rt.averageTimeHours.toFixed(1)} hours</td>
+                    <td>${rt.count}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+          ` : ''}
+
+          <div class="footer">
+            Generated by TransitCare Analytics System<br>
+            Report contains data for the selected ${dateRange} period
+          </div>
+        </body>
+      </html>
+    `;
+
+    printWindow.document.write(htmlContent);
+    printWindow.document.close();
+
+    // Wait for content to load, then trigger print
+    setTimeout(() => {
+      printWindow.focus();
+      printWindow.print();
+      // Close the window after printing
+      setTimeout(() => {
+        printWindow.close();
+      }, 1000);
+    }, 500);
+  };
+
+  const generateCSVContent = (): string => {
+    const analytics = calculateAnalytics();
+    
+    let csv = "Report Type,Category,Value,Count,Percentage\n";
+    
+    // Add category data
+    Object.entries(analytics.categoryBreakdown).forEach(([category, count]) => {
+      const percentage = ((count / analytics.totalComplaints) * 100).toFixed(1);
+      csv += `Category,"${category}",${count},${count},${percentage}\n`;
+    });
+    
+    // Add priority data
+    ['high', 'medium', 'low'].forEach(priority => {
+      const count = analytics.priorityBreakdown[priority] || 0;
+      const percentage = analytics.totalComplaints > 0 ? ((count / analytics.totalComplaints) * 100).toFixed(1) : '0';
+      csv += `Priority,"${priority}",${count},${count},${percentage}\n`;
+    });
+    
+    // Add status data
+    Object.entries(analytics.statusBreakdown).forEach(([status, count]) => {
+      const percentage = ((count / analytics.totalComplaints) * 100).toFixed(1);
+      csv += `Status,"${status}",${count},${count},${percentage}\n`;
+    });
+    
+    return csv;
+  };
+
+  const downloadFile = (content: string, filename: string, mimeType: string): void => {
+    const element = document.createElement('a');
+    const file = new Blob([content], { type: mimeType });
+    element.href = URL.createObjectURL(file);
+    element.download = filename;
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
   };
 
   return (
@@ -213,7 +564,7 @@ export const ReportsAnalytics: React.FC = () => {
             Export PDF
           </Button>
           <Button variant="outline" onClick={() => handleExport('excel')}>
-            Export Excel
+            Export CSV
           </Button>
         </div>
       </div>
