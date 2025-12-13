@@ -228,270 +228,516 @@ export const ReportsAnalytics: React.FC = () => {
       <html>
         <head>
           <title>TransitCare Analytics Report</title>
+          <meta charset="UTF-8">
           <style>
+            * { box-sizing: border-box; }
             body { 
-              font-family: Arial, sans-serif; 
-              margin: 40px; 
-              line-height: 1.6; 
-              color: #333;
+              font-family: Arial, sans-serif;
+              margin: 0;
+              padding: 0;
+              background: white;
+              color: #000;
+              line-height: 1.4;
+              font-size: 10px;
+            }
+            .container {
+              max-width: 210mm;
+              margin: 0 auto;
+              background: white;
+              min-height: 100vh;
             }
             .header { 
-              text-align: center; 
-              border-bottom: 3px solid #3B82F6; 
-              padding-bottom: 20px; 
-              margin-bottom: 30px; 
+              background: #000;
+              color: white;
+              padding: 20px;
+              text-align: center;
+              border-bottom: 2px solid #000;
             }
             .header h1 { 
-              color: #3B82F6; 
-              margin: 0; 
-              font-size: 28px; 
+              margin: 0 0 5px 0;
+              font-size: 18px;
+              font-weight: bold;
             }
-            .meta-info { 
-              background: #f8f9fa; 
-              padding: 15px; 
-              border-radius: 8px; 
-              margin-bottom: 30px; 
+            .header p {
+              margin: 0;
+              font-size: 12px;
+            }
+            .content { 
+              padding: 20px;
+            }
+            .report-meta { 
+              background: #f8f8f8;
+              padding: 15px;
+              margin-bottom: 20px;
+              border: 1px solid #ccc;
+            }
+            .report-meta h2 {
+              margin: 0 0 10px 0;
+              color: #000;
+              font-size: 14px;
+              font-weight: bold;
+            }
+            .meta-grid {
+              display: grid;
+              grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+              gap: 10px;
+              margin-top: 10px;
+            }
+            .meta-item {
+              background: white;
+              padding: 8px;
+              border: 1px solid #ccc;
+            }
+            .meta-label {
+              font-weight: bold;
+              color: #333;
+              margin-bottom: 3px;
+              font-size: 9px;
+            }
+            .meta-value {
+              font-size: 10px;
+              color: #000;
+              font-weight: normal;
+            }
+            .summary-cards { 
+              display: grid; 
+              grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); 
+              gap: 15px; 
+              margin-bottom: 20px; 
+            }
+            .summary-card { 
+              background: #f8f8f8;
+              padding: 15px;
+              text-align: center;
+              border: 1px solid #ccc;
+            }
+            .card-number { 
+              font-size: 16px; 
+              font-weight: bold; 
+              color: #000;
+              margin-bottom: 3px;
+            }
+            .card-label { 
+              color: #333; 
+              font-weight: normal;
+              font-size: 9px;
             }
             .section { 
-              margin-bottom: 30px; 
+              margin-bottom: 25px; 
+              background: white;
+              border: 1px solid #ccc;
             }
-            .section h2 { 
-              color: #374151; 
-              border-bottom: 2px solid #E5E7EB; 
-              padding-bottom: 10px; 
-              margin-bottom: 15px; 
+            .section-header {
+              background: #f0f0f0;
+              padding: 12px 15px;
+              border-bottom: 1px solid #ccc;
             }
-            .stats-grid { 
-              display: grid; 
-              grid-template-columns: repeat(3, 1fr); 
-              gap: 20px; 
-              margin-bottom: 30px; 
+            .section-header h3 { 
+              margin: 0;
+              color: #000; 
+              font-size: 12px;
+              font-weight: bold;
             }
-            .stat-card { 
-              background: #f8f9fa; 
-              padding: 20px; 
-              border-radius: 8px; 
-              text-align: center; 
-              border: 1px solid #e9ecef; 
+            .section-content {
+              padding: 15px;
             }
-            .stat-number { 
-              font-size: 32px; 
-              font-weight: bold; 
-              color: #3B82F6; 
-            }
-            .stat-label { 
-              color: #6b7280; 
-              margin-top: 5px; 
+            .section-content p {
+              margin: 0 0 10px 0;
+              font-size: 9px;
+              color: #333;
             }
             table { 
               width: 100%; 
               border-collapse: collapse; 
-              margin-bottom: 20px; 
-            }
-            th, td { 
-              padding: 12px; 
-              text-align: left; 
-              border-bottom: 1px solid #e9ecef; 
+              margin: 0;
+              font-size: 9px;
             }
             th { 
-              background-color: #f8f9fa; 
-              font-weight: bold; 
-              color: #374151; 
+              background: #f0f0f0;
+              color: #000; 
+              font-weight: bold;
+              padding: 8px 6px;
+              text-align: left;
+              border: 1px solid #ccc;
+              font-size: 8px;
+            }
+            td { 
+              padding: 8px 6px;
+              border: 1px solid #ccc;
+              vertical-align: middle;
+              font-size: 9px;
+            }
+            .progress-container { 
+              display: flex;
+              align-items: center;
+              gap: 5px;
+              min-width: 100px;
             }
             .progress-bar { 
-              background: #e9ecef; 
-              height: 8px; 
-              border-radius: 4px; 
+              flex: 1;
+              background: #e0e0e0; 
+              height: 6px; 
+              border: 1px solid #ccc;
               overflow: hidden; 
-              margin: 5px 0; 
             }
             .progress-fill { 
-              background: #3B82F6; 
               height: 100%; 
-              transition: width 0.3s ease; 
+              background: #333;
+            }
+            .percentage-badge {
+              background: #000;
+              color: white;
+              padding: 2px 4px;
+              font-size: 7px;
+              font-weight: bold;
+              min-width: 30px;
+              text-align: center;
+            }
+            .insight-box {
+              background: #f8f8f8;
+              border: 1px solid #ccc;
+              padding: 12px;
+              margin: 10px 0;
+            }
+            .insight-box h4 {
+              margin: 0 0 5px 0;
+              color: #000;
+              font-weight: bold;
+              font-size: 10px;
+            }
+            .insight-box p {
+              margin: 0;
+              color: #333;
+              line-height: 1.3;
+              font-size: 9px;
             }
             .footer { 
               text-align: center; 
-              margin-top: 40px; 
-              padding-top: 20px; 
-              border-top: 1px solid #e9ecef; 
-              color: #6b7280; 
-              font-size: 14px; 
+              padding: 20px;
+              background: #f0f0f0;
+              border-top: 1px solid #ccc;
+              margin-top: 20px;
+            }
+            .footer-content {
+              max-width: 400px;
+              margin: 0 auto;
+            }
+            .footer h4 {
+              color: #000;
+              margin: 0 0 8px 0;
+              font-size: 12px;
+            }
+            .footer p {
+              color: #333; 
+              margin: 3px 0;
+              font-size: 8px;
+            }
+            .no-data {
+              text-align: center;
+              padding: 20px;
+              color: #666;
+            }
+            .no-data h4 {
+              font-size: 10px;
+              margin: 0 0 5px 0;
+            }
+            .no-data p {
+              font-size: 8px;
+              margin: 0;
             }
             @media print {
-              body { margin: 20px; }
-              .header { border-bottom-color: #000; }
+              body { background: none; }
+              .container { box-shadow: none; }
             }
           </style>
         </head>
         <body>
-          <div class="header">
-            <h1>TransitCare Analytics Report</h1>
-            <p>Comprehensive Complaint Management Analytics</p>
-          </div>
-
-          <div class="meta-info">
-            <strong>Generated:</strong> ${currentDate} | 
-            <strong>Period:</strong> ${dateRange.toUpperCase()} | 
-            <strong>Report Type:</strong> ${selectedReport.toUpperCase()}
-          </div>
-
-          <div class="stats-grid">
-            <div class="stat-card">
-              <div class="stat-number">${analytics.totalComplaints}</div>
-              <div class="stat-label">Total Complaints</div>
+          <div class="container">
+            <div class="header">
+              <h1>TransitCare Analytics Report</h1>
+              <p>Comprehensive Public Transport Complaint Management Insights</p>
             </div>
-            <div class="stat-card">
-              <div class="stat-number">${analytics.resolvedComplaints}</div>
-              <div class="stat-label">Resolved</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-number">${analytics.resolutionRate}%</div>
-              <div class="stat-label">Resolution Rate</div>
-            </div>
-          </div>
 
-          <div class="section">
-            <h2>Complaints by Category</h2>
-            <table>
-              <thead>
-                <tr>
-                  <th>Category</th>
-                  <th>Count</th>
-                  <th>Percentage</th>
-                  <th>Distribution</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${Object.entries(analytics.categoryBreakdown)
-                  .sort(([,a], [,b]) => b - a)
-                  .map(([category, count]) => {
-                    const percentage = ((count / analytics.totalComplaints) * 100).toFixed(1);
-                    return `
+            <div class="content">
+              <div class="report-meta">
+                <h2>Report Information</h2>
+                <p>This report provides detailed insights into complaint patterns, resolution efficiency, and service performance metrics for your transit system.</p>
+                <div class="meta-grid">
+                  <div class="meta-item">
+                    <div class="meta-label">Generated</div>
+                    <div class="meta-value">${currentDate}</div>
+                  </div>
+                  <div class="meta-item">
+                    <div class="meta-label">Time Period</div>
+                    <div class="meta-value">${dateRange.toUpperCase()}</div>
+                  </div>
+                  <div class="meta-item">
+                    <div class="meta-label">Report Type</div>
+                    <div class="meta-value">${selectedReport.toUpperCase()} ANALYSIS</div>
+                  </div>
+                  <div class="meta-item">
+                    <div class="meta-label">Focus Area</div>
+                    <div class="meta-value">Service Quality Metrics</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="summary-cards">
+                <div class="summary-card">
+                  <div class="card-number">${analytics.totalComplaints}</div>
+                  <div class="card-label">Total Complaints Received</div>
+                </div>
+                <div class="summary-card">
+                  <div class="card-number">${analytics.resolvedComplaints}</div>
+                  <div class="card-label">Successfully Resolved</div>
+                </div>
+                <div class="summary-card">
+                  <div class="card-number">${analytics.resolutionRate}%</div>
+                  <div class="card-label">Resolution Success Rate</div>
+                </div>
+              </div>
+
+              ${analytics.totalComplaints > 0 ? `
+                <div class="insight-box">
+                  <h4>Key Insights</h4>
+                  <p>
+                    Your transit system received ${analytics.totalComplaints} complaints during the selected ${dateRange} period. 
+                    With a ${analytics.resolutionRate}% resolution rate, your team has successfully addressed 
+                    ${analytics.resolvedComplaints} issues. 
+                    ${analytics.resolutionRate >= 80 ? 'This demonstrates excellent customer service performance.' : 
+                      analytics.resolutionRate >= 60 ? 'There is room for improvement in resolution efficiency.' : 
+                      'Consider reviewing resolution processes to improve customer satisfaction.'}
+                  </p>
+                </div>
+              ` : ''}
+
+              ${Object.keys(analytics.categoryBreakdown).length > 0 ? `
+              <div class="section">
+                <div class="section-header">
+                  <h3>Complaint Categories Breakdown</h3>
+                </div>
+                <div class="section-content">
+                  <p>Understanding complaint patterns helps identify areas needing immediate attention and resource allocation.</p>
+                  <table>
+                    <thead>
                       <tr>
-                        <td style="text-transform: capitalize;">${category}</td>
-                        <td>${count}</td>
-                        <td>${percentage}%</td>
-                        <td>
-                          <div class="progress-bar">
-                            <div class="progress-fill" style="width: ${percentage}%"></div>
-                          </div>
-                        </td>
+                        <th>Service Category</th>
+                        <th>Number of Issues</th>
+                        <th>Percentage of Total</th>
+                        <th>Impact Distribution</th>
                       </tr>
-                    `;
-                  }).join('')}
-              </tbody>
-            </table>
-          </div>
+                    </thead>
+                    <tbody>
+                      ${Object.entries(analytics.categoryBreakdown)
+                        .sort(([,a], [,b]) => b - a)
+                        .map(([category, count]) => {
+                          const percentage = ((count / analytics.totalComplaints) * 100).toFixed(1);
+                          const categoryNames: Record<string, string> = {
+                            'service': 'Service Quality',
+                            'safety': 'Safety Concerns', 
+                            'accessibility': 'Accessibility',
+                            'cleanliness': 'Cleanliness',
+                            'staff': 'Staff Behavior',
+                            'vehicle': 'Vehicle Condition',
+                            'schedule': 'Schedule/Timing',
+                            'other': 'Other Issues'
+                          };
+                          return `
+                            <tr>
+                              <td><strong>${categoryNames[category] || category.toUpperCase()}</strong></td>
+                              <td><strong>${count}</strong></td>
+                              <td><strong>${percentage}%</strong></td>
+                              <td>
+                                <div class="progress-container">
+                                  <div class="progress-bar">
+                                    <div class="progress-fill" style="width: ${percentage}%"></div>
+                                  </div>
+                                  <div class="percentage-badge">${percentage}%</div>
+                                </div>
+                              </td>
+                            </tr>
+                          `;
+                        }).join('')}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              ` : `
+              <div class="section">
+                <div class="section-content">
+                  <div class="no-data">
+                    <h4>No Category Data Available</h4>
+                    <p>Complaint category information will appear here once complaints are submitted and categorized.</p>
+                  </div>
+                </div>
+              </div>
+              `}
 
-          <div class="section">
-            <h2>Priority Distribution</h2>
-            <table>
-              <thead>
-                <tr>
-                  <th>Priority Level</th>
-                  <th>Count</th>
-                  <th>Percentage</th>
-                  <th>Distribution</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${['high', 'medium', 'low'].map(priority => {
-                  const count = analytics.priorityBreakdown[priority] || 0;
-                  const percentage = analytics.totalComplaints > 0 ? ((count / analytics.totalComplaints) * 100).toFixed(1) : '0';
-                  return `
-                    <tr>
-                      <td style="text-transform: capitalize;">${priority}</td>
-                      <td>${count}</td>
-                      <td>${percentage}%</td>
-                      <td>
-                        <div class="progress-bar">
-                          <div class="progress-fill" style="width: ${percentage}%; background: ${priority === 'high' ? '#EF4444' : priority === 'medium' ? '#F59E0B' : '#10B981'}"></div>
-                        </div>
-                      </td>
-                    </tr>
-                  `;
-                }).join('')}
-              </tbody>
-            </table>
-          </div>
-
-          <div class="section">
-            <h2>Status Breakdown</h2>
-            <table>
-              <thead>
-                <tr>
-                  <th>Status</th>
-                  <th>Count</th>
-                  <th>Percentage</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${Object.entries(analytics.statusBreakdown)
-                  .sort(([,a], [,b]) => b - a)
-                  .map(([status, count]) => {
-                    const percentage = ((count / analytics.totalComplaints) * 100).toFixed(1);
-                    return `
+              <div class="section">
+                <div class="section-header">
+                  <h3>Priority Level Distribution</h3>
+                </div>
+                <div class="section-content">
+                  <p>Priority analysis helps ensure urgent issues receive immediate attention while maintaining overall service quality.</p>
+                  <table>
+                    <thead>
                       <tr>
-                        <td style="text-transform: capitalize;">${status.replace('-', ' ')}</td>
-                        <td>${count}</td>
-                        <td>${percentage}%</td>
+                        <th>Priority Level</th>
+                        <th>Count</th>
+                        <th>Percentage</th>
+                        <th>Urgency Distribution</th>
                       </tr>
-                    `;
-                  }).join('')}
-              </tbody>
-            </table>
-          </div>
+                    </thead>
+                    <tbody>
+                      ${['high', 'medium', 'low'].map(priority => {
+                        const count = analytics.priorityBreakdown[priority] || 0;
+                        const percentage = analytics.totalComplaints > 0 ? ((count / analytics.totalComplaints) * 100).toFixed(1) : '0';
+                        const priorityInfo = {
+                          'high': { label: 'High Priority (Urgent)', description: 'Requires immediate attention' },
+                          'medium': { label: 'Medium Priority (Important)', description: 'Address within 24-48 hours' },
+                          'low': { label: 'Low Priority (Standard)', description: 'Address within normal timeframe' }
+                        };
+                        return `
+                          <tr>
+                            <td><strong>${priorityInfo[priority as keyof typeof priorityInfo].label}</strong><br><small style="color: #666;">${priorityInfo[priority as keyof typeof priorityInfo].description}</small></td>
+                            <td><strong>${count}</strong></td>
+                            <td><strong>${percentage}%</strong></td>
+                            <td>
+                              <div class="progress-container">
+                                <div class="progress-bar">
+                                  <div class="progress-fill" style="width: ${percentage}%"></div>
+                                </div>
+                                <div class="percentage-badge">${percentage}%</div>
+                              </div>
+                            </td>
+                          </tr>
+                        `;
+                      }).join('')}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
 
-          ${analytics.monthlyTrends.length > 0 ? `
-          <div class="section">
-            <h2>Monthly Trends</h2>
-            <table>
-              <thead>
-                <tr>
-                  <th>Period</th>
-                  <th>Complaints</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${analytics.monthlyTrends.map((trend: any) => `
-                  <tr>
-                    <td>${trend.period}</td>
-                    <td>${trend.count}</td>
-                  </tr>
-                `).join('')}
-              </tbody>
-            </table>
-          </div>
-          ` : ''}
+              ${Object.keys(analytics.statusBreakdown).length > 0 ? `
+              <div class="section">
+                <div class="section-header">
+                  <h3>Resolution Status Overview</h3>
+                </div>
+                <div class="section-content">
+                  <p>Status tracking provides insights into your team's efficiency and helps identify bottlenecks in the resolution process.</p>
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Current Status</th>
+                        <th>Number of Cases</th>
+                        <th>Percentage of Total</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      ${Object.entries(analytics.statusBreakdown)
+                        .sort(([,a], [,b]) => b - a)
+                        .map(([status, count]) => {
+                          const percentage = ((count / analytics.totalComplaints) * 100).toFixed(1);
+                          const statusInfo: Record<string, {label: string}> = {
+                            'pending': { label: 'Awaiting Review' },
+                            'in-progress': { label: 'Being Processed' },
+                            'resolved': { label: 'Successfully Resolved' },
+                            'closed': { label: 'Case Closed' }
+                          };
+                          return `
+                            <tr>
+                              <td><strong>${statusInfo[status]?.label || status.replace('-', ' ').toUpperCase()}</strong></td>
+                              <td><strong>${count}</strong></td>
+                              <td><strong>${percentage}%</strong></td>
+                            </tr>
+                          `;
+                        }).join('')}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              ` : ''}
 
-          ${analytics.resolutionTimes.length > 0 ? `
-          <div class="section">
-            <h2>Average Resolution Times</h2>
-            <table>
-              <thead>
-                <tr>
-                  <th>Priority</th>
-                  <th>Average Hours</th>
-                  <th>Resolved Count</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${analytics.resolutionTimes.map((rt: any) => `
-                  <tr>
-                    <td style="text-transform: capitalize;">${rt.priority}</td>
-                    <td>${rt.averageTimeHours.toFixed(1)} hours</td>
-                    <td>${rt.count}</td>
-                  </tr>
-                `).join('')}
-              </tbody>
-            </table>
-          </div>
-          ` : ''}
+              ${analytics.monthlyTrends.length > 0 ? `
+              <div class="section">
+                <div class="section-header">
+                  <h3>Monthly Trends Analysis</h3>
+                </div>
+                <div class="section-content">
+                  <p>Trend analysis helps identify seasonal patterns and measure the effectiveness of service improvements over time.</p>
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Time Period</th>
+                        <th>Complaints Received</th>
+                        <th>Trend Indicator</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      ${analytics.monthlyTrends.map((trend: any, index: number) => {
+                        const previousCount = index > 0 ? analytics.monthlyTrends[index - 1].count : trend.count;
+                        const trendDirection = trend.count > previousCount ? 'Increase' : trend.count < previousCount ? 'Decrease' : 'Stable';
+                        return `
+                          <tr>
+                            <td><strong>${trend.period}</strong></td>
+                            <td><strong>${trend.count}</strong></td>
+                            <td>${trendDirection}</td>
+                          </tr>
+                        `;
+                      }).join('')}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              ` : ''}
 
-          <div class="footer">
-            Generated by TransitCare Analytics System<br>
-            Report contains data for the selected ${dateRange} period
+              ${analytics.resolutionTimes.length > 0 ? `
+              <div class="section">
+                <div class="section-header">
+                  <h3>Resolution Time Performance</h3>
+                </div>
+                <div class="section-content">
+                  <p>Resolution efficiency metrics help evaluate team performance and identify areas where response times can be improved.</p>
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Priority Level</th>
+                        <th>Average Resolution Time</th>
+                        <th>Cases Resolved</th>
+                        <th>Performance Rating</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      ${analytics.resolutionTimes.map((rt: any) => {
+                        const hours = rt.averageTimeHours;
+                        const rating = hours < 8 ? 'Excellent' : hours < 24 ? 'Good' : hours < 72 ? 'Fair' : 'Needs Improvement';
+                        return `
+                          <tr>
+                            <td><strong>${rt.priority.toUpperCase()} Priority</strong></td>
+                            <td><strong>${hours.toFixed(1)} hours</strong></td>
+                            <td><strong>${rt.count} cases</strong></td>
+                            <td>${rating}</td>
+                          </tr>
+                        `;
+                      }).join('')}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              ` : ''}
+            </div>
+
+            <div class="footer">
+              <div class="footer-content">
+                <h4>TransitCare Analytics System</h4>
+                <p><strong>Enhancing Public Transportation Through Data-Driven Insights</strong></p>
+                <p>This report was automatically generated on ${currentDate}</p>
+                <p>Data represents the ${dateRange} period • Report ID: TC-${Date.now()}</p>
+                <p style="margin-top: 10px; font-size: 7px; color: #666;">
+                  For questions about this report or data interpretation, contact your TransitCare system administrator.
+                </p>
+              </div>
+            </div>
           </div>
         </body>
       </html>
