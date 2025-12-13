@@ -873,30 +873,137 @@ app.delete('/api/notifications/:id', async (req, res) => {
 app.get('/api/reports/:type', async (req, res) => {
   try {
     const { type } = req.params;
-    const { startDate, endDate } = req.query;
+    const { startDate, endDate, category, status } = req.query;
+
+    // Build filter object
+    let filter = {};
+    
+    if (startDate && endDate) {
+      filter.createdAt = {
+        $gte: new Date(startDate),
+        $lte: new Date(endDate)
+      };
+    }
+    
+    if (category && category !== 'all') {
+      filter.category = category;
+    }
+    
+    if (status && status !== 'all') {
+      filter.status = status;
+    }
 
     let data = {};
 
     switch (type) {
       case 'complaints-by-category':
         data = await Complaint.aggregate([
+          { $match: filter },
           {
             $group: {
               _id: '$category',
               count: { $sum: 1 }
             }
-          }
+          },
+          { $sort: { count: -1 } }
         ]);
         break;
       
-      case 'resolution-time':
-        // Placeholder implementation
-        data = [
-          { period: 'Week 1', averageTime: 18 },
-          { period: 'Week 2', averageTime: 22 },
-          { period: 'Week 3', averageTime: 16 },
-          { period: 'Week 4', averageTime: 20 },
-        ];
+      case 'complaints-by-priority':
+        data = await Complaint.aggregate([
+          { $match: filter },
+          {
+            $group: {
+              _id: '$priority',
+              count: { $sum: 1 }
+            }
+          },
+          { $sort: { count: -1 } }
+        ]);
+        break;
+
+      case 'complaints-by-status':
+        data = await Complaint.aggregate([
+          { $match: filter },
+          {
+            $group: {
+              _id: '$status',
+              count: { $sum: 1 }
+            }
+          },
+          { $sort: { count: -1 } }
+        ]);
+        break;
+
+      case 'monthly-trends':
+        data = await Complaint.aggregate([
+          { $match: filter },
+          {
+            $group: {
+              _id: {
+                year: { $year: '$createdAt' },
+                month: { $month: '$createdAt' }
+              },
+              count: { $sum: 1 }
+            }
+          },
+          { $sort: { '_id.year': 1, '_id.month': 1 } },
+          {
+            $project: {
+              period: {
+                $concat: [
+                  { $toString: '$_id.year' },
+                  '-',
+                  { $toString: '$_id.month' }
+                ]
+              },
+              count: 1,
+              _id: 0
+            }
+          }
+        ]);
+        break;
+
+      case 'resolution-times':
+        // Calculate average resolution times
+        data = await Complaint.aggregate([
+          { 
+            $match: { 
+              ...filter,
+              status: { $in: ['resolved', 'closed'] },
+              resolutionDate: { $exists: true }
+            }
+          },
+          {
+            $addFields: {
+              resolutionTime: {
+                $subtract: [
+                  { $dateFromString: { dateString: '$resolutionDate' } },
+                  '$createdAt'
+                ]
+              }
+            }
+          },
+          {
+            $group: {
+              _id: '$priority',
+              averageTime: { 
+                $avg: { 
+                  $divide: ['$resolutionTime', 1000 * 60 * 60] // Convert to hours
+                }
+              },
+              count: { $sum: 1 }
+            }
+          },
+          {
+            $project: {
+              priority: '$_id',
+              averageTimeHours: { $round: ['$averageTime', 2] },
+              count: 1,
+              _id: 0
+            }
+          }
+        ]);
         break;
 
       default:
@@ -905,6 +1012,7 @@ app.get('/api/reports/:type', async (req, res) => {
 
     res.json({ success: true, data });
   } catch (error) {
+    console.error('Reports error:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });

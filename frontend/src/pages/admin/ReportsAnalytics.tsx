@@ -3,43 +3,193 @@ import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { apiClient } from '../../lib/api';
 import { Complaint } from '../../types';
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell
+} from 'recharts';
+
+interface ReportData {
+  [key: string]: any;
+}
 
 export const ReportsAnalytics: React.FC = () => {
   const [selectedReport, setSelectedReport] = useState<string>('trends');
   const [dateRange, setDateRange] = useState<'week' | 'month' | 'year'>('month');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [selectedStatus, setSelectedStatus] = useState<string>('all');
+  
+  // Data states
   const [complaints, setComplaints] = useState<Complaint[]>([]);
+  const [reportData, setReportData] = useState<ReportData>({});
+  
+  // Loading and error states
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  
+  // Categories for filtering
+  const categories = ['all', 'bus-delay', 'poor-service', 'overcrowding', 'safety', 'cleanliness', 'other'];
+  const statuses = ['all', 'pending', 'in-progress', 'resolved', 'closed'];
 
   useEffect(() => {
-    fetchComplaints();
-  }, []);
+    fetchData();
+  }, [selectedReport, dateRange, selectedCategory, selectedStatus]);
+
+  const getDateFilter = () => {
+    const now = new Date();
+    let startDate: Date;
+    
+    switch (dateRange) {
+      case 'week':
+        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        break;
+      case 'month':
+        startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        break;
+      case 'year':
+        startDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+        break;
+      default:
+        startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    }
+    
+    return {
+      startDate: startDate.toISOString(),
+      endDate: now.toISOString()
+    };
+  };
 
   const fetchComplaints = async () => {
     try {
-      const response = await apiClient.getComplaints();
+      const filters: Record<string, any> = getDateFilter();
+      
+      if (selectedCategory !== 'all') {
+        filters.category = selectedCategory;
+      }
+      if (selectedStatus !== 'all') {
+        filters.status = selectedStatus;
+      }
+      
+      // Set a high limit to get all complaints for reporting
+      filters.limit = 1000;
+      
+      const response = await apiClient.getComplaints(filters);
       if (response.success && response.data) {
         setComplaints(response.data);
+      } else {
+        throw new Error(response.error || 'Failed to fetch complaints');
       }
     } catch (error) {
       console.error('Error fetching complaints:', error);
+      throw error;
     }
   };
 
-  // Calculate analytics
+  const fetchReportData = async (reportType: string) => {
+    try {
+      const filters = getDateFilter();
+      const response = await apiClient.getReports(reportType, filters);
+      
+      if (response.success && response.data) {
+        return response.data;
+      } else {
+        throw new Error(response.error || `Failed to fetch ${reportType} data`);
+      }
+    } catch (error) {
+      console.error(`Error fetching ${reportType}:`, error);
+      throw error;
+    }
+  };
+
+  const fetchData = async () => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      await fetchComplaints();
+      
+      // Fetch specific report data based on selected report type
+      const reportTypes = {
+        'trends': ['complaints-by-category', 'complaints-by-priority', 'complaints-by-status', 'monthly-trends'],
+        'performance': ['resolution-times', 'complaints-by-status'],
+        'hotspots': ['complaints-by-category']
+      };
+      
+      const types = reportTypes[selectedReport as keyof typeof reportTypes] || [];
+      const data: ReportData = {};
+      
+      for (const type of types) {
+        try {
+          data[type] = await fetchReportData(type);
+        } catch (err) {
+          // Continue with other reports even if one fails
+          console.warn(`Failed to fetch ${type}:`, err);
+        }
+      }
+      
+      setReportData(data);
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Failed to load data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Calculate analytics from both complaints and report data
   const calculateAnalytics = () => {
     const totalComplaints = complaints.length;
     const resolvedComplaints = complaints.filter(c => c.status === 'resolved' || c.status === 'closed').length;
     const resolutionRate = totalComplaints > 0 ? ((resolvedComplaints / totalComplaints) * 100).toFixed(1) : '0';
 
+    // Use API data when available, fall back to calculated data
     const categoryBreakdown: Record<string, number> = {};
     const priorityBreakdown: Record<string, number> = {};
+    const statusBreakdown: Record<string, number> = {};
     const locationBreakdown: Record<string, number> = {};
 
+    // Process complaints data
     complaints.forEach(complaint => {
       categoryBreakdown[complaint.category] = (categoryBreakdown[complaint.category] || 0) + 1;
       priorityBreakdown[complaint.priority] = (priorityBreakdown[complaint.priority] || 0) + 1;
+      statusBreakdown[complaint.status] = (statusBreakdown[complaint.status] || 0) + 1;
       const location = complaint.location || complaint.route || 'Unknown';
       locationBreakdown[location] = (locationBreakdown[location] || 0) + 1;
     });
+
+    // Override with API data if available
+    if (reportData['complaints-by-category']?.length > 0) {
+      reportData['complaints-by-category'].forEach((item: any) => {
+        if (item._id && typeof item.count === 'number') {
+          categoryBreakdown[item._id] = item.count;
+        }
+      });
+    }
+
+    if (reportData['complaints-by-priority']?.length > 0) {
+      reportData['complaints-by-priority'].forEach((item: any) => {
+        if (item._id && typeof item.count === 'number') {
+          priorityBreakdown[item._id] = item.count;
+        }
+      });
+    }
+
+    if (reportData['complaints-by-status']?.length > 0) {
+      reportData['complaints-by-status'].forEach((item: any) => {
+        if (item._id && typeof item.count === 'number') {
+          statusBreakdown[item._id] = item.count;
+        }
+      });
+    }
 
     return {
       totalComplaints,
@@ -47,7 +197,10 @@ export const ReportsAnalytics: React.FC = () => {
       resolutionRate,
       categoryBreakdown,
       priorityBreakdown,
-      locationBreakdown
+      statusBreakdown,
+      locationBreakdown,
+      monthlyTrends: reportData['monthly-trends'] || [],
+      resolutionTimes: reportData['resolution-times'] || []
     };
   };
 
@@ -79,38 +232,76 @@ export const ReportsAnalytics: React.FC = () => {
         </div>
       </div>
 
-      {/* Time Range Selector */}
-      <div className="flex space-x-2">
-        <button
-          onClick={() => setDateRange('week')}
-          className={`px-4 py-2 rounded-md font-medium ${
-            dateRange === 'week'
-              ? 'bg-blue-600 text-white'
-              : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
-          }`}
-        >
-          Last Week
-        </button>
-        <button
-          onClick={() => setDateRange('month')}
-          className={`px-4 py-2 rounded-md font-medium ${
-            dateRange === 'month'
-              ? 'bg-blue-600 text-white'
-              : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
-          }`}
-        >
-          Last Month
-        </button>
-        <button
-          onClick={() => setDateRange('year')}
-          className={`px-4 py-2 rounded-md font-medium ${
-            dateRange === 'year'
-              ? 'bg-blue-600 text-white'
-              : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
-          }`}
-        >
-          Last Year
-        </button>
+      {/* Filters */}
+      <div className="space-y-4">
+        {/* Time Range Selector */}
+        <div className="flex items-center space-x-4">
+          <span className="font-medium text-gray-700 dark:text-gray-300">Time Range:</span>
+          <div className="flex space-x-2">
+            <button
+              onClick={() => setDateRange('week')}
+              className={`px-4 py-2 rounded-md font-medium ${
+                dateRange === 'week'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+              }`}
+            >
+              Last Week
+            </button>
+            <button
+              onClick={() => setDateRange('month')}
+              className={`px-4 py-2 rounded-md font-medium ${
+                dateRange === 'month'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+              }`}
+            >
+              Last Month
+            </button>
+            <button
+              onClick={() => setDateRange('year')}
+              className={`px-4 py-2 rounded-md font-medium ${
+                dateRange === 'year'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+              }`}
+            >
+              Last Year
+            </button>
+          </div>
+        </div>
+
+        {/* Additional Filters */}
+        <div className="flex items-center space-x-6">
+          <div className="flex items-center space-x-2">
+            <span className="font-medium text-gray-700 dark:text-gray-300">Category:</span>
+            <select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300"
+            >
+              {categories.map(category => (
+                <option key={category} value={category}>
+                  {category === 'all' ? 'All Categories' : category.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="flex items-center space-x-2">
+            <span className="font-medium text-gray-700 dark:text-gray-300">Status:</span>
+            <select
+              value={selectedStatus}
+              onChange={(e) => setSelectedStatus(e.target.value)}
+              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300"
+            >
+              {statuses.map(status => (
+                <option key={status} value={status}>
+                  {status === 'all' ? 'All Statuses' : status.charAt(0).toUpperCase() + status.slice(1).replace('-', ' ')}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
       </div>
 
       {/* Report Type Tabs */}
@@ -147,8 +338,39 @@ export const ReportsAnalytics: React.FC = () => {
         </button>
       </div>
 
+      {/* Loading State */}
+      {loading && (
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          <span className="ml-3 text-gray-600 dark:text-gray-400">Loading report data...</span>
+        </div>
+      )}
+
+      {/* Error State */}
+      {error && (
+        <Card className="p-6 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+          <div className="flex items-center space-x-3">
+            <div className="text-red-500">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div>
+              <h3 className="font-medium text-red-800 dark:text-red-200">Error loading report data</h3>
+              <p className="text-red-600 dark:text-red-300 text-sm mt-1">{error}</p>
+              <button
+                onClick={fetchData}
+                className="text-sm text-red-600 dark:text-red-400 underline hover:no-underline mt-1"
+              >
+                Try again
+              </button>
+            </div>
+          </div>
+        </Card>
+      )}
+
       {/* Report Content */}
-      {selectedReport === 'trends' && (
+      {!loading && !error && selectedReport === 'trends' && (
         <div className="space-y-6">
           <Card className="p-6">
             <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
@@ -181,33 +403,65 @@ export const ReportsAnalytics: React.FC = () => {
               <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
                 Complaints by Category
               </h2>
-              <div className="space-y-2">
-                {Object.entries(analytics.categoryBreakdown).map(([category, count]) => (
-                  <div key={category} className="flex items-center justify-between p-2">
-                    <span className="capitalize text-gray-700 dark:text-gray-300">{category}</span>
-                    <div className="flex items-center space-x-2">
-                      <div className="w-32 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                        <div
-                          className="bg-blue-600 h-2 rounded-full"
-                          style={{
-                            width: `${(count / analytics.totalComplaints) * 100}%`
-                          }}
-                        ></div>
+              {Object.keys(analytics.categoryBreakdown).length > 0 ? (
+                <>
+                  <div className="space-y-2 mb-6">
+                    {Object.entries(analytics.categoryBreakdown).map(([category, count]) => (
+                      <div key={category} className="flex items-center justify-between p-2">
+                        <span className="capitalize text-gray-700 dark:text-gray-300">{category}</span>
+                        <div className="flex items-center space-x-2">
+                          <div className="w-32 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                            <div
+                              className="bg-blue-600 h-2 rounded-full"
+                              style={{
+                                width: `${(count / analytics.totalComplaints) * 100}%`
+                              }}
+                            ></div>
+                          </div>
+                          <span className="font-semibold text-gray-900 dark:text-white w-8 text-right">
+                            {count}
+                          </span>
+                        </div>
                       </div>
-                      <span className="font-semibold text-gray-900 dark:text-white w-8 text-right">
-                        {count}
-                      </span>
-                    </div>
+                    ))}
                   </div>
-                ))}
-              </div>
+                  
+                  {/* Pie Chart */}
+                  <div className="h-64">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={Object.entries(analytics.categoryBreakdown).map(([category, count]) => ({
+                            name: category,
+                            value: count
+                          }))}
+                          cx="50%"
+                          cy="50%"
+                          outerRadius={80}
+                          fill="#3B82F6"
+                          dataKey="value"
+                          label
+                        >
+                          {Object.entries(analytics.categoryBreakdown).map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={`hsl(${index * 45}, 70%, 50%)`} />
+                          ))}
+                        </Pie>
+                        <Tooltip />
+                        <Legend />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                </>
+              ) : (
+                <p className="text-gray-500 dark:text-gray-400 text-center py-8">No category data available</p>
+              )}
             </Card>
 
             <Card className="p-6">
               <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
                 Priority Distribution
               </h2>
-              <div className="space-y-2">
+              <div className="space-y-2 mb-6">
                 {['high', 'medium', 'low'].map(priority => {
                   const count = analytics.priorityBreakdown[priority] || 0;
                   const colors: Record<string, string> = {
@@ -235,12 +489,62 @@ export const ReportsAnalytics: React.FC = () => {
                   );
                 })}
               </div>
+
+              {/* Bar Chart */}
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={['high', 'medium', 'low'].map(priority => ({
+                      priority,
+                      count: analytics.priorityBreakdown[priority] || 0,
+                      color: priority === 'high' ? '#EF4444' : priority === 'medium' ? '#F59E0B' : '#10B981'
+                    }))}
+                    margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="priority" />
+                    <YAxis />
+                    <Tooltip />
+                    <Bar dataKey="count" fill="#8884d8" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
             </Card>
           </div>
+
+          {/* Monthly Trends Chart */}
+          {analytics.monthlyTrends.length > 0 && (
+            <Card className="p-6">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
+                Monthly Complaint Trends
+              </h2>
+              <div className="h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart
+                    data={analytics.monthlyTrends}
+                    margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="period" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Line 
+                      type="monotone" 
+                      dataKey="count" 
+                      stroke="#3B82F6" 
+                      strokeWidth={2}
+                      name="Complaints"
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </Card>
+          )}
         </div>
       )}
 
-      {selectedReport === 'performance' && (
+      {!loading && !error && selectedReport === 'performance' && (
         <div className="space-y-6">
           <div className="grid md:grid-cols-3 gap-6">
             <Card className="p-6 text-center">
@@ -269,7 +573,7 @@ export const ReportsAnalytics: React.FC = () => {
             </h2>
             <div className="space-y-3">
               {['pending', 'in-progress', 'resolved', 'closed'].map(status => {
-                const count = complaints.filter(c => c.status === status).length;
+                const count = analytics.statusBreakdown[status] || 0;
                 const statusColors: Record<string, string> = {
                   pending: 'bg-yellow-100 dark:bg-yellow-900/20',
                   'in-progress': 'bg-blue-100 dark:bg-blue-900/20',
@@ -284,17 +588,52 @@ export const ReportsAnalytics: React.FC = () => {
                 };
                 return (
                   <div key={status} className={`flex items-center justify-between p-3 ${statusColors[status]} rounded`}>
-                    <span className={`capitalize font-semibold ${textColors[status]}`}>{status}</span>
+                    <span className={`capitalize font-semibold ${textColors[status]}`}>{status.replace('-', ' ')}</span>
                     <span className={`text-2xl font-bold ${textColors[status]}`}>{count}</span>
                   </div>
                 );
               })}
             </div>
           </Card>
+
+          {/* Resolution Times Chart */}
+          {analytics.resolutionTimes.length > 0 && (
+            <Card className="p-6">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
+                Average Resolution Time by Priority
+              </h2>
+              <div className="h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={analytics.resolutionTimes}
+                    margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="priority" />
+                    <YAxis label={{ value: 'Hours', angle: -90, position: 'insideLeft' }} />
+                    <Tooltip 
+                      formatter={(value: number) => [`${value} hours`, 'Average Resolution Time']}
+                      labelFormatter={(label) => `Priority: ${label}`}
+                    />
+                    <Bar dataKey="averageTimeHours" fill="#8B5CF6" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="mt-4 grid grid-cols-3 gap-4 text-sm">
+                {analytics.resolutionTimes.map((item: any) => (
+                  <div key={item.priority} className="text-center p-2 bg-gray-50 dark:bg-gray-800 rounded">
+                    <div className="font-semibold text-gray-900 dark:text-white capitalize">{item.priority}</div>
+                    <div className="text-gray-600 dark:text-gray-400">{item.averageTimeHours}h avg</div>
+                    <div className="text-gray-600 dark:text-gray-400">{item.count} resolved</div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
         </div>
       )}
 
-      {selectedReport === 'hotspots' && (
+      {!loading && !error && selectedReport === 'hotspots' && (
         <div className="space-y-6">
           <Card className="p-6">
             <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
