@@ -4,6 +4,12 @@ export interface User {
   firstName?: string;
   lastName?: string;
   role: 'passenger' | 'officer' | 'admin';
+  rating?: number;
+  totalReviews?: number;
+  status?: 'active' | 'inactive';
+  lastLogin?: string;
+  department?: string;
+  phoneNumber?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -26,6 +32,11 @@ export interface Complaint {
   resolution?: string;
   resolutionNotes?: string;
   resolutionDate?: string;
+  feedback?: {
+    rating: number;
+    comment?: string;
+    submittedAt: string;
+  };
   aiAnalysis?: {
     priority: string;
     sentiment: number;

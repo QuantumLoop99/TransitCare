@@ -77,9 +77,29 @@ export const ComplaintDetails: React.FC = () => {
   };
 
   const handleSubmitFeedback = async () => {
-    if (feedbackRating === 0) return;
-    // TODO: Submit feedback to API
-    alert('Thank you for your feedback!');
+    if (feedbackRating === 0 || !id) return;
+    
+    try {
+      const feedbackData = {
+        rating: feedbackRating,
+        comment: feedbackComment.trim() || undefined,
+      };
+      
+      const response = await apiClient.submitComplaintFeedback(id, feedbackData);
+      
+      if (response.success && response.data) {
+        // Update the complaint state with the new feedback
+        setComplaint(response.data);
+        setFeedbackRating(0);
+        setFeedbackComment('');
+        alert('Thank you for your feedback!');
+      } else {
+        alert(response.error || 'Failed to submit feedback');
+      }
+    } catch (error) {
+      console.error('Error submitting feedback:', error);
+      alert('Failed to submit feedback');
+    }
   };
 
   const getStatusColor = (status: string) => {
@@ -287,6 +307,53 @@ export const ComplaintDetails: React.FC = () => {
         </Card>
       )}
 
+      {/* Feedback Display - For admins and officers viewing resolved complaints */}
+      {complaint.status === 'resolved' && complaint.feedback && (
+        <Card className="p-6">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center">
+            <span className="text-blue-600 dark:text-blue-400 mr-2">💬</span>
+            Passenger Feedback
+          </h2>
+          <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+            <div className="flex items-center mb-3">
+              <div className="flex items-center space-x-1 mr-4">
+                <span className="text-lg font-medium text-gray-900 dark:text-white">Rating:</span>
+                <div className="flex items-center space-x-1">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <span
+                      key={star}
+                      className={`text-xl ${
+                        star <= complaint.feedback!.rating 
+                          ? 'text-yellow-500' 
+                          : 'text-gray-300 dark:text-gray-600'
+                      }`}
+                    >
+                      ★
+                    </span>
+                  ))}
+                  <span className="ml-2 text-lg font-medium text-gray-900 dark:text-white">
+                    ({complaint.feedback.rating}/5)
+                  </span>
+                </div>
+              </div>
+              <span className="text-sm text-gray-600 dark:text-gray-400">
+                Submitted on {new Date(complaint.feedback.submittedAt).toLocaleString()}
+              </span>
+            </div>
+            {complaint.feedback.comment && (
+              <div className="mt-3 pt-3 border-t border-blue-200 dark:border-blue-700">
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Additional Comments:
+                </p>
+                <p className="text-gray-900 dark:text-white whitespace-pre-wrap">
+                  {complaint.feedback.comment}
+                </p>
+              </div>
+            )}
+          </div>
+        </Card>
+      )}
+
       {/* Messages */}
       <Card className="p-6">
         <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Messages</h2>
@@ -331,7 +398,7 @@ export const ComplaintDetails: React.FC = () => {
       </Card>
 
       {/* Feedback Form */}
-      {complaint.status === 'resolved' && (
+      {complaint.status === 'resolved' && !complaint.feedback && (
         <Card className="p-6">
           <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
             Provide Feedback

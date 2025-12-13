@@ -100,6 +100,29 @@ class ApiClient {
     });
   }
 
+  async getOfficerRating(officerId: string): Promise<ApiResponse<{ rating: number; totalReviews: number }>> {
+    return this.request<{ rating: number; totalReviews: number }>(`/users/${officerId}/rating`);
+  }
+
+  // Messages endpoints
+  async getComplaintMessages(complaintId: string): Promise<ApiResponse<any[]>> {
+    return this.request<any[]>(`/complaints/${complaintId}/messages`);
+  }
+
+  async postComplaintMessage(complaintId: string, message: any): Promise<ApiResponse<any>> {
+    return this.request<any>(`/complaints/${complaintId}/messages`, {
+      method: 'POST',
+      body: JSON.stringify(message),
+    });
+  }
+
+  async submitComplaintFeedback(complaintId: string, feedback: { rating: number; comment?: string }): Promise<ApiResponse<Complaint>> {
+    return this.request<Complaint>(`/complaints/${complaintId}/feedback`, {
+      method: 'POST',
+      body: JSON.stringify(feedback),
+    });
+  }
+
   // Dashboard endpoints
   async getDashboardStats(): Promise<ApiResponse<DashboardStats>> {
     return this.request<DashboardStats>('/dashboard/stats');
