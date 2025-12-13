@@ -3,112 +3,93 @@ import { User, Complaint, DashboardStats, ApiResponse } from '../types';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api';
 
 class ApiClient {
-  private async request<T>(
-    endpoint: string,
-    options: RequestInit = {}
-  ): Promise<ApiResponse<T>> {
+  private async request<T>(endpoint: string, options: RequestInit = {}): Promise<ApiResponse<T>> {
     const url = `${API_BASE_URL}${endpoint}`;
-    
     const config: RequestInit = {
-      headers: {
-        'Content-Type': 'application/json',
-        ...options.headers,
-      },
+      headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
       ...options,
     };
 
-    // Add auth token if available
     const token = localStorage.getItem('clerk-token');
     if (token) {
-      config.headers = {
-        ...config.headers,
-        Authorization: `Bearer ${token}`,
-      };
+      config.headers = { ...(config.headers || {}), Authorization: `Bearer ${token}` };
     }
 
     try {
-      const response = await fetch(url, config);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || `HTTP error! status: ${response.status}`);
-      }
-
+      const resp = await fetch(url, config);
+      const data = await resp.json();
+      if (!resp.ok) throw new Error(data.error || `HTTP ${resp.status}`);
       return data;
-    } catch (error) {
-      console.error('API request failed:', error);
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown error occurred',
-      };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
     }
   }
 
-  // Complaint endpoints
-  async getComplaints(filters?: Record<string, any>): Promise<ApiResponse<Complaint[]>> {
+  // 🔹 Complaints
+  getComplaints(filters?: Record<string, any>) {
     const params = new URLSearchParams(filters || {}).toString();
-    return this.request<Complaint[]>(`/complaints${params ? '?' + params : ''}`);
+    return this.request<Complaint[]>(`/complaints${params ? `?${params}` : ''}`);
   }
 
-  async getComplaint(id: string): Promise<ApiResponse<Complaint>> {
+  getComplaint(id: string) {
     return this.request<Complaint>(`/complaints/${id}`);
   }
 
-  async createComplaint(data: Omit<Complaint, 'id' | 'createdAt' | 'updatedAt'>): Promise<ApiResponse<Complaint>> {
-    return this.request<Complaint>('/complaints', {
+  createComplaint(data: Omit<Complaint, '_id' | 'createdAt' | 'updatedAt'>) {
+    return this.request<Complaint>('/complaints', { method: 'POST', body: JSON.stringify(data) });
+  }
+
+  updateComplaint(id: string, data: Partial<Complaint>) {
+    return this.request<Complaint>(`/complaints/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+  }
+
+  prioritizeComplaint(id: string) {
+    return this.request<Complaint>(`/complaints/${id}/prioritize`, { method: 'POST' });
+  }
+
+  // 🔹 Complaint Chat (New)
+  getComplaintMessages(complaintId: string) {
+    return this.request<any[]>(`/complaints/${complaintId}/messages`);
+  }
+
+  postComplaintMessage(
+    complaintId: string,
+    data: { sender: 'passenger' | 'officer' | 'admin'; senderId?: string; message: string }
+  ) {
+    return this.request<any>(`/complaints/${complaintId}/messages`, {
       method: 'POST',
       body: JSON.stringify(data),
     });
   }
 
-  async updateComplaint(id: string, data: Partial<Complaint>): Promise<ApiResponse<Complaint>> {
-    return this.request<Complaint>(`/complaints/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(data),
-    });
+  // 🔹 Users
+  getUsers(filters?: Record<string, any>) {
+    const q = filters ? `?${new URLSearchParams(filters).toString()}` : '';
+    return this.request<User[]>(`/users${q}`);
   }
 
-  async prioritizeComplaint(id: string): Promise<ApiResponse<Complaint>> {
-    return this.request<Complaint>(`/complaints/${id}/prioritize`, {
-      method: 'POST',
-    });
+  createUser(data: Omit<User, '_id' | 'createdAt' | 'updatedAt'>) {
+    return this.request<User>('/users', { method: 'POST', body: JSON.stringify(data) });
   }
 
-  // User endpoints
-  async getUsers(filters?: Record<string, any>): Promise<ApiResponse<User[]>> {
-    const query = filters ? `?${new URLSearchParams(filters).toString()}` : '';
-    return this.request<User[]>(`/users${query}`);
+  updateUser(id: string, data: Partial<User>) {
+    return this.request<User>(`/users/${id}`, { method: 'PUT', body: JSON.stringify(data) });
   }
 
-  async createUser(data: Omit<User, 'id' | 'createdAt' | 'updatedAt'>): Promise<ApiResponse<User>> {
-    return this.request<User>('/users', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
+  deleteUser(id: string) {
+    return this.request<{ success: boolean }>(`/users/${id}`, { method: 'DELETE' });
   }
 
-  async updateUser(id: string, data: Partial<User>): Promise<ApiResponse<User>> {
-    return this.request<User>(`/users/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(data),
-    });
+  // 🔹 Dashboard
+  getDashboardStats(params?: Record<string, any>) {
+    const q = params ? `?${new URLSearchParams(params).toString()}` : '';
+    return this.request<DashboardStats>(`/dashboard/stats${q}`);
   }
 
-  async deleteUser(id: string): Promise<ApiResponse<{ success: boolean }>> {
-    return this.request<{ success: boolean }>(`/users/${id}`, {
-      method: 'DELETE',
-    });
-  }
-
-  // Dashboard endpoints
-  async getDashboardStats(): Promise<ApiResponse<DashboardStats>> {
-    return this.request<DashboardStats>('/dashboard/stats');
-  }
-
-  // Reports endpoints
-  async getReports(type: string, params?: Record<string, any>): Promise<ApiResponse<any>> {
-    const query = params ? `?${new URLSearchParams(params).toString()}` : '';
-    return this.request<any>(`/reports/${type}${query}`);
+  // 🔹 Reports
+  getReports(type: string, params?: Record<string, any>) {
+    const q = params ? `?${new URLSearchParams(params).toString()}` : '';
+    return this.request<any>(`/reports/${type}${q}`);
   }
 }
 

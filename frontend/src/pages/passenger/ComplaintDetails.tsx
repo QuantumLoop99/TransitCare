@@ -8,12 +8,16 @@ import { apiClient } from '../../lib/api';
 import { Complaint } from '../../types';
 
 interface Message {
-  id: string;
+  _id?: string; // MongoDB document ID
+  id?: string; // Local temp ID (for optimistic updates)
   sender: 'passenger' | 'officer' | 'admin';
-  senderName: string;
+  senderId?: string;
+  senderName?: string;
   message: string;
-  timestamp: string;
+  createdAt?: string; // from backend
+  timestamp?: string; // local-only timestamp
 }
+
 
 interface StatusUpdate {
   status: string;
@@ -32,7 +36,7 @@ export const ComplaintDetails: React.FC = () => {
   const [feedbackRating, setFeedbackRating] = useState(0);
   const [feedbackComment, setFeedbackComment] = useState('');
 
-  // ✅ Fetch real complaint data from backend
+  //Fetch complaint details
   useEffect(() => {
     const fetchComplaint = async () => {
       if (!id) return;
@@ -42,9 +46,14 @@ export const ComplaintDetails: React.FC = () => {
         const response = await apiClient.getComplaint(id);
         if (response.success && response.data) {
           setComplaint(response.data);
-          // Optionally generate a placeholder status timeline (until backend supports it)
+
+          // Optional placeholder timeline
           setStatusTimeline([
-            { status: response.data.status, timestamp: response.data.createdAt, note: 'Complaint created' }
+            {
+              status: response.data.status,
+              timestamp: response.data.createdAt,
+              note: 'Complaint created',
+            },
           ]);
         } else {
           setComplaint(null);
@@ -60,20 +69,63 @@ export const ComplaintDetails: React.FC = () => {
     fetchComplaint();
   }, [id]);
 
-  const handleSendMessage = async () => {
-    if (!newMessage.trim()) return;
+  //Fetch complaint messages (chat)
+  useEffect(() => {
+    const fetchMessages = async () => {
+      if (!id) return;
+      try {
+        const res = await apiClient.getComplaintMessages(id);
+        if (res.success && res.data) setMessages(res.data);
+      } catch (err) {
+        console.error('Error fetching messages:', err);
+      }
+    };
 
-    const message: Message = {
-      id: Date.now().toString(),
+    fetchMessages();
+    const interval = setInterval(fetchMessages, 5000);
+    return () => clearInterval(interval);
+  }, [id]);
+
+  const handleSendMessage = async () => {
+    if (!newMessage.trim() || !id) return;
+
+    const tempId = `tmp-${Date.now()}`;
+    const optimistic: Message = {
+      id: tempId,
       sender: 'passenger',
+      senderId: localStorage.getItem('userId') || undefined,
       senderName: 'You',
-      message: newMessage,
+      message: newMessage.trim(),
       timestamp: new Date().toISOString(),
     };
 
-    setMessages([...messages, message]);
+    setMessages(prev => [...prev, optimistic]);
     setNewMessage('');
-    // TODO: Send message to API
+
+    try {
+      const res = await apiClient.postComplaintMessage(id, {
+        sender: 'passenger',
+        senderId: localStorage.getItem('userId') || undefined,
+        message: optimistic.message,
+      });
+
+      if (res.success && res.data) {
+        // If backend returns the created message (recommended)
+        if (!Array.isArray(res.data)) {
+          const created = res.data as Message;
+          setMessages(prev =>
+            prev.map(m => (m.id === tempId ? created : m))
+          );
+        } else {
+          // If backend returns the whole array, just replace state
+          setMessages(res.data);
+        }
+      }
+    } catch (err) {
+      console.error('Error sending message:', err);
+      // Optional: roll back optimistic message on error
+      setMessages(prev => prev.filter(m => m.id !== tempId));
+    }
   };
 
   const handleSubmitFeedback = async () => {
@@ -99,7 +151,7 @@ export const ComplaintDetails: React.FC = () => {
 
   // Priority badge temporarily disabled; re-enable when needed.
 
-  // ✅ Loading and fallback states
+  // Loading and fallback states
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -287,48 +339,78 @@ export const ComplaintDetails: React.FC = () => {
         </Card>
       )}
 
-      {/* Messages */}
-      <Card className="p-6">
-        <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Messages</h2>
-        <div className="space-y-4 mb-4 max-h-96 overflow-y-auto">
-          {messages.length === 0 ? (
-            <p className="text-gray-500 dark:text-gray-400 text-center py-8">
-              No messages yet. Start a conversation with the transport representative.
-            </p>
-          ) : (
-            messages.map((message) => (
-              <div
-                key={message.id}
-                className={`flex ${message.sender === 'passenger' ? 'justify-end' : 'justify-start'}`}
-              >
-                <div
-                  className={`max-w-md px-4 py-3 rounded-lg ${
-                    message.sender === 'passenger'
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white'
-                  }`}
-                >
-                  <p className="font-semibold text-sm mb-1">{message.senderName}</p>
-                  <p>{message.message}</p>
-                  <p className="text-xs mt-1 opacity-75">
-                    {new Date(message.timestamp).toLocaleString()}
-                  </p>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
+{/* Messages */}
+<Card className="p-6">
+  <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
+    Messages
+  </h2>
 
-        <div className="flex space-x-2">
-          <Input
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-            placeholder="Type your message..."
-            onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-          />
-          <Button onClick={handleSendMessage}>Send</Button>
+  {/* Message list */}
+  <div className="space-y-4 mb-4 max-h-96 overflow-y-auto">
+    {messages.length === 0 ? (
+      <p className="text-gray-500 dark:text-gray-400 text-center py-8">
+        No messages yet. Start a conversation with the transport representative.
+      </p>
+    ) : (
+      messages.map((msg) => (
+        <div
+          key={msg.id || msg._id}
+          className={`flex ${
+            msg.sender === 'passenger' ? 'justify-end' : 'justify-start'
+          }`}
+        >
+          <div
+            className={`max-w-md px-4 py-3 rounded-lg ${
+              msg.sender === 'passenger'
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white'
+            }`}
+          >
+            <p className="font-semibold text-sm mb-1">
+              {(() => {
+                const currentUserId = localStorage.getItem('userId') || undefined;
+                const currentEmail = localStorage.getItem('userEmail') || undefined;
+
+                // True if this message is authored by the current passenger:
+                const authoredByMe =
+                  // prefer id match when present
+                  (msg.senderId && currentUserId && msg.senderId === currentUserId) ||
+                  // fallback: if it's a passenger message and the complaint belongs to my email
+                  (msg.sender === 'passenger' &&
+                    complaint?.submittedBy &&
+                    currentEmail &&
+                    complaint.submittedBy === currentEmail);
+
+                if (authoredByMe) return 'You';
+                if (msg.senderName?.trim()) return msg.senderName;
+                if (msg.sender === 'officer') return 'Officer';
+                if (msg.sender === 'admin') return 'Admin';
+                return 'Passenger';
+              })()}
+            </p>
+
+            <p>{msg.message}</p>
+            <p className="text-xs mt-1 opacity-75">
+              {new Date(msg.timestamp || msg.createdAt || Date.now()).toLocaleString()}
+            </p>
+          </div>
         </div>
-      </Card>
+      ))
+    )}
+  </div>
+
+  {/* Input area */}
+  <div className="flex space-x-2">
+    <Input
+      value={newMessage}
+      onChange={(e) => setNewMessage(e.target.value)}
+      placeholder="Type your message..."
+      onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+    />
+    <Button onClick={handleSendMessage}>Send</Button>
+  </div>
+</Card>
+
 
       {/* Feedback Form */}
       {complaint.status === 'resolved' && (

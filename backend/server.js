@@ -78,6 +78,13 @@ if (process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY !== 'sk-your_openai
 }
 
 // Models
+const messageSchema = new Schema({
+  sender: { type: String, enum: ['passenger', 'officer', 'admin'], required: true },
+  senderId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  message: { type: String, required: true },
+  createdAt: { type: Date, default: Date.now },
+});
+
 const complaintSchema = new Schema({
   title: { type: String, required: true },
   description: { type: String, required: true },
@@ -101,6 +108,7 @@ const complaintSchema = new Schema({
     confidence: Number,
     reasoning: String,
   },
+  messages: [messageSchema]
 }, {
   timestamps: true,
 });
@@ -283,6 +291,52 @@ app.put('/api/complaints/:id', async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
+
+// Add a message to a complaint
+app.post('/api/complaints/:id/messages', async (req, res) => {
+  try {
+    const { sender, senderId, message } = req.body;
+
+    if (!sender || !senderId || !message) {
+      return res.status(400).json({ success: false, error: 'Missing sender, senderId, or message' });
+    }
+
+    const complaint = await Complaint.findById(req.params.id);
+    if (!complaint) {
+      return res.status(404).json({ success: false, error: 'Complaint not found' });
+    }
+
+    const newMessage = { sender, senderId, message };
+    complaint.messages.push(newMessage);
+    await complaint.save();
+
+    const savedComplaint = await Complaint.findById(req.params.id)
+      .select({ messages: { $slice: -1 } })
+      .populate('messages.senderId', 'firstName lastName role');
+
+    res.json({ success: true, data: savedComplaint.messages[0] });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+
+// Get messages for a complaint
+app.get('/api/complaints/:id/messages', async (req, res) => {
+  try {
+    const complaint = await Complaint.findById(req.params.id)
+      .populate('messages.senderId', 'firstName lastName role');
+
+    if (!complaint) {
+      return res.status(404).json({ success: false, error: 'Complaint not found' });
+    }
+
+    res.json({ success: true, data: complaint.messages });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 
 // Assign or reassign complaint to an officer
 app.patch('/api/complaints/:id/assign', async (req, res) => {
