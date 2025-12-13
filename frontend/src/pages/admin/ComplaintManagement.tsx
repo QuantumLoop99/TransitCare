@@ -6,6 +6,8 @@ import { Badge } from '../../components/ui/Badge';
 import { Input } from '../../components/ui/input';
 import { Complaint } from '../../types';
 import { apiClient } from '../../lib/api';
+import { User } from '../../types';
+
 
 export const ComplaintManagement: React.FC = () => {
   const navigate = useNavigate();
@@ -15,9 +17,12 @@ export const ComplaintManagement: React.FC = () => {
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterPriority, setFilterPriority] = useState<string>('all');
   const [filterCategory, setFilterCategory] = useState<string>('all');
+  const [officerMap, setOfficerMap] = useState<Record<string, string>>({});
+
 
   useEffect(() => {
     fetchComplaints();
+    fetchOfficers();
   }, []);
 
   const fetchComplaints = async () => {
@@ -33,6 +38,23 @@ export const ComplaintManagement: React.FC = () => {
       setLoading(false);
     }
   };
+
+  const fetchOfficers = async () => {
+  try {
+    const res = await apiClient.getUsers({ role: 'officer' });
+    if (res.success && res.data) {
+      const map: Record<string, string> = {};
+      res.data.forEach((officer: User) => {
+        const id = (officer as any)._id || officer.id;
+        map[id] = `${officer.firstName || ''} ${officer.lastName || ''}`.trim();
+      });
+      setOfficerMap(map);
+    }
+  } catch (err) {
+    console.error('Error fetching officers:', err);
+  }
+};
+
 
   const filteredComplaints = complaints.filter(complaint => {
     const matchesSearch = 
@@ -233,9 +255,9 @@ export const ComplaintManagement: React.FC = () => {
                   <p className="font-medium text-gray-900 dark:text-white truncate">
                     {complaint.assignedTo ? (
                       typeof complaint.assignedTo === 'object' ? (
-                        `${(complaint.assignedTo as any).firstName || ''} ${(complaint.assignedTo as any).lastName || ''}`
+                        `${(complaint.assignedTo as any).firstName || ''} ${(complaint.assignedTo as any).lastName || ''}`.trim()
                       ) : (
-                        '#' + complaint.assignedTo
+                        officerMap[complaint.assignedTo] || 'Unassigned'
                       )
                     ) : (
                       <span className="text-yellow-600 dark:text-yellow-400">Unassigned</span>
