@@ -49,7 +49,7 @@ export const AdminDashboard: React.FC = () => {
   };
 
   const handleViewComplaint = (complaint: Complaint) => {
-    window.open(`/admin/complaints/${complaint._id}`, '_blank');
+    navigate(`/admin/complaints/${complaint._id}`);
   };
 
   return (
