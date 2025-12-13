@@ -26,8 +26,6 @@ interface ReportData {
 export const ReportsAnalytics: React.FC = () => {
   const [selectedReport, setSelectedReport] = useState<string>('trends');
   const [dateRange, setDateRange] = useState<'week' | 'month' | 'year'>('month');
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [selectedStatus, setSelectedStatus] = useState<string>('all');
   
   // Data states
   const [complaints, setComplaints] = useState<Complaint[]>([]);
@@ -36,37 +34,10 @@ export const ReportsAnalytics: React.FC = () => {
   // Loading and error states
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
-  // Categories for filtering - matching complaint form categories
-  const categories = [
-    'all', 
-    'service', 
-    'safety', 
-    'accessibility', 
-    'cleanliness', 
-    'staff', 
-    'vehicle', 
-    'schedule', 
-    'other'
-  ];
-  const statuses = ['all', 'pending', 'in-progress', 'resolved', 'closed'];
-
-  // Category labels for display
-  const categoryLabels: Record<string, string> = {
-    'all': 'All Categories',
-    'service': 'Service Quality',
-    'safety': 'Safety Concern', 
-    'accessibility': 'Accessibility',
-    'cleanliness': 'Cleanliness',
-    'staff': 'Staff Behavior',
-    'vehicle': 'Vehicle Condition',
-    'schedule': 'Schedule/Timing',
-    'other': 'Other'
-  };
 
   useEffect(() => {
     fetchData();
-  }, [selectedReport, dateRange, selectedCategory, selectedStatus]);
+  }, [selectedReport, dateRange]);
 
   const getDateFilter = () => {
     const now = new Date();
@@ -95,13 +66,6 @@ export const ReportsAnalytics: React.FC = () => {
   const fetchComplaints = async () => {
     try {
       const filters: Record<string, any> = getDateFilter();
-      
-      if (selectedCategory !== 'all') {
-        filters.category = selectedCategory;
-      }
-      if (selectedStatus !== 'all') {
-        filters.status = selectedStatus;
-      }
       
       // Set a high limit to get all complaints for reporting
       filters.limit = 1000;
@@ -144,8 +108,7 @@ export const ReportsAnalytics: React.FC = () => {
       // Fetch specific report data based on selected report type
       const reportTypes = {
         'trends': ['complaints-by-category', 'complaints-by-priority', 'complaints-by-status', 'monthly-trends'],
-        'performance': ['resolution-times', 'complaints-by-status'],
-        'hotspots': ['complaints-by-category']
+        'performance': ['resolution-times', 'complaints-by-status']
       };
       
       const types = reportTypes[selectedReport as keyof typeof reportTypes] || [];
@@ -255,76 +218,38 @@ export const ReportsAnalytics: React.FC = () => {
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="space-y-4">
-        {/* Time Range Selector */}
-        <div className="flex items-center space-x-4">
-          <span className="font-medium text-gray-700 dark:text-gray-300">Time Range:</span>
-          <div className="flex space-x-2">
-            <button
-              onClick={() => setDateRange('week')}
-              className={`px-4 py-2 rounded-md font-medium ${
-                dateRange === 'week'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
-              }`}
-            >
-              Last Week
-            </button>
-            <button
-              onClick={() => setDateRange('month')}
-              className={`px-4 py-2 rounded-md font-medium ${
-                dateRange === 'month'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
-              }`}
-            >
-              Last Month
-            </button>
-            <button
-              onClick={() => setDateRange('year')}
-              className={`px-4 py-2 rounded-md font-medium ${
-                dateRange === 'year'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
-              }`}
-            >
-              Last Year
-            </button>
-          </div>
-        </div>
-
-        {/* Additional Filters */}
-        <div className="flex items-center space-x-6">
-          <div className="flex items-center space-x-2">
-            <span className="font-medium text-gray-700 dark:text-gray-300">Category:</span>
-            <select
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300"
-            >
-              {categories.map(category => (
-                <option key={category} value={category}>
-                  {categoryLabels[category]}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="flex items-center space-x-2">
-            <span className="font-medium text-gray-700 dark:text-gray-300">Status:</span>
-            <select
-              value={selectedStatus}
-              onChange={(e) => setSelectedStatus(e.target.value)}
-              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300"
-            >
-              {statuses.map(status => (
-                <option key={status} value={status}>
-                  {status === 'all' ? 'All Statuses' : status.charAt(0).toUpperCase() + status.slice(1).replace('-', ' ')}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
+      {/* Time Range Selector */}
+      <div className="flex space-x-2">
+        <button
+          onClick={() => setDateRange('week')}
+          className={`px-4 py-2 rounded-md font-medium ${
+            dateRange === 'week'
+              ? 'bg-blue-600 text-white'
+              : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+          }`}
+        >
+          Last Week
+        </button>
+        <button
+          onClick={() => setDateRange('month')}
+          className={`px-4 py-2 rounded-md font-medium ${
+            dateRange === 'month'
+              ? 'bg-blue-600 text-white'
+              : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+          }`}
+        >
+          Last Month
+        </button>
+        <button
+          onClick={() => setDateRange('year')}
+          className={`px-4 py-2 rounded-md font-medium ${
+            dateRange === 'year'
+              ? 'bg-blue-600 text-white'
+              : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+          }`}
+        >
+          Last Year
+        </button>
       </div>
 
       {/* Report Type Tabs */}
@@ -348,16 +273,6 @@ export const ReportsAnalytics: React.FC = () => {
           }`}
         >
           Service Performance
-        </button>
-        <button
-          onClick={() => setSelectedReport('hotspots')}
-          className={`px-4 py-2 font-medium ${
-            selectedReport === 'hotspots'
-              ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400'
-              : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-          }`}
-        >
-          Hotspot Heatmaps
         </button>
       </div>
 
@@ -421,146 +336,329 @@ export const ReportsAnalytics: React.FC = () => {
             </div>
           </Card>
 
-          <div className="grid md:grid-cols-2 gap-6">
-            <Card className="p-6">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
-                Complaints by Category
-              </h2>
+          <div className="grid md:grid-cols-2 gap-8">
+            <Card className="p-8 bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-blue-900/10 dark:to-indigo-900/20 border-blue-200 dark:border-blue-800">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                  Complaints by Category
+                </h2>
+                <div className="bg-blue-600 text-white px-3 py-1 rounded-full text-sm font-semibold">
+                  {Object.keys(analytics.categoryBreakdown).length} Categories
+                </div>
+              </div>
               {Object.keys(analytics.categoryBreakdown).length > 0 ? (
                 <>
-                  <div className="space-y-2 mb-6">
-                    {Object.entries(analytics.categoryBreakdown).map(([category, count]) => (
-                      <div key={category} className="flex items-center justify-between p-2">
-                        <span className="text-gray-700 dark:text-gray-300">{categoryLabels[category] || category}</span>
-                        <div className="flex items-center space-x-2">
-                          <div className="w-32 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                            <div
-                              className="bg-blue-600 h-2 rounded-full"
-                              style={{
-                                width: `${(count / analytics.totalComplaints) * 100}%`
-                              }}
-                            ></div>
+                  <div className="space-y-4 mb-8">
+                    {Object.entries(analytics.categoryBreakdown)
+                      .sort(([,a], [,b]) => b - a)
+                      .map(([category, count]) => {
+                        const percentage = ((count / analytics.totalComplaints) * 100).toFixed(1);
+                        return (
+                          <div key={category} className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
+                            <div className="flex items-center justify-between mb-3">
+                              <span className="capitalize text-gray-800 dark:text-gray-200 font-medium text-lg">
+                                {category}
+                              </span>
+                              <div className="flex items-center space-x-3">
+                                <span className="text-gray-600 dark:text-gray-400 text-sm">
+                                  {percentage}%
+                                </span>
+                                <span className="bg-blue-600 text-white rounded-full px-3 py-1 text-sm font-bold min-w-12 text-center">
+                                  {count}
+                                </span>
+                              </div>
+                            </div>
+                            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 overflow-hidden">
+                              <div
+                                className="bg-gradient-to-r from-blue-500 to-blue-600 h-3 rounded-full transition-all duration-500 ease-out"
+                                style={{
+                                  width: `${percentage}%`
+                                }}
+                              ></div>
+                            </div>
                           </div>
-                          <span className="font-semibold text-gray-900 dark:text-white w-8 text-right">
+                        );
+                      })}
+                  </div>
+                  
+                  <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 text-center">
+                      Category Distribution
+                    </h3>
+                    <div className="h-72">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie
+                            data={Object.entries(analytics.categoryBreakdown)
+                              .sort(([,a], [,b]) => b - a)
+                              .map(([category, count]) => ({
+                              name: category,
+                              value: count
+                            }))}
+                            cx="50%"
+                            cy="50%"
+                            outerRadius={90}
+                            fill="#3B82F6"
+                            dataKey="value"
+                            label={({name, percent}) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                            labelLine={false}
+                          >
+                            {Object.entries(analytics.categoryBreakdown).map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={`hsl(${index * 45 + 220}, 70%, ${50 + index * 5}%)`} />
+                            ))}
+                          </Pie>
+                          <Tooltip formatter={(value, name) => [value, name]} />
+                          <Legend 
+                            wrapperStyle={{ paddingTop: '20px' }}
+                            iconType="circle"
+                          />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="text-center py-16">
+                  <div className="text-gray-400 mb-4">
+                    <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                  </div>
+                  <p className="text-gray-500 dark:text-gray-400 text-lg">No category data available</p>
+                  <p className="text-gray-400 dark:text-gray-500 text-sm mt-2">Data will appear here once complaints are submitted</p>
+                </div>
+              )}
+            </Card>
+
+            <Card className="p-8 bg-gradient-to-br from-amber-50 to-orange-100 dark:from-amber-900/10 dark:to-orange-900/20 border-amber-200 dark:border-amber-800">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                  Priority Distribution
+                </h2>
+                <div className="bg-amber-600 text-white px-3 py-1 rounded-full text-sm font-semibold">
+                  3 Levels
+                </div>
+              </div>
+              
+              <div className="space-y-4 mb-8">
+                {['high', 'medium', 'low'].map(priority => {
+                  const count = analytics.priorityBreakdown[priority] || 0;
+                  const percentage = analytics.totalComplaints > 0 ? ((count / analytics.totalComplaints) * 100).toFixed(1) : '0';
+                  const priorityConfig: Record<string, {bg: string, text: string, gradient: string, icon: string}> = {
+                    high: {
+                      bg: 'bg-red-100 dark:bg-red-900/20 border-red-200 dark:border-red-800',
+                      text: 'text-red-800 dark:text-red-300',
+                      gradient: 'from-red-500 to-red-600',
+                      icon: '🔥'
+                    },
+                    medium: {
+                      bg: 'bg-yellow-100 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800',
+                      text: 'text-yellow-800 dark:text-yellow-300',
+                      gradient: 'from-yellow-500 to-yellow-600',
+                      icon: '⚡'
+                    },
+                    low: {
+                      bg: 'bg-green-100 dark:bg-green-900/20 border-green-200 dark:border-green-800',
+                      text: 'text-green-800 dark:text-green-300',
+                      gradient: 'from-green-500 to-green-600',
+                      icon: '📝'
+                    }
+                  };
+                  const config = priorityConfig[priority];
+                  return (
+                    <div key={priority} className={`${config.bg} border rounded-lg p-5 transition-all duration-200 hover:shadow-md`}>
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center space-x-3">
+                          <span className="text-2xl">{config.icon}</span>
+                          <span className={`capitalize font-semibold text-lg ${config.text}`}>
+                            {priority} Priority
+                          </span>
+                        </div>
+                        <div className="flex items-center space-x-3">
+                          <span className={`${config.text} text-sm font-medium`}>
+                            {percentage}%
+                          </span>
+                          <span className={`bg-gradient-to-r ${config.gradient} text-white rounded-full px-4 py-2 text-sm font-bold min-w-12 text-center shadow-sm`}>
                             {count}
                           </span>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                  
-                  {/* Pie Chart */}
-                  <div className="h-64">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          data={Object.entries(analytics.categoryBreakdown).map(([category, count]) => ({
-                            name: categoryLabels[category] || category,
-                            value: count
-                          }))}
-                          cx="50%"
-                          cy="50%"
-                          outerRadius={80}
-                          fill="#3B82F6"
-                          dataKey="value"
-                          label
-                        >
-                          {Object.entries(analytics.categoryBreakdown).map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={`hsl(${index * 45}, 70%, 50%)`} />
-                          ))}
-                        </Pie>
-                        <Tooltip />
-                        <Legend />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </div>
-                </>
-              ) : (
-                <p className="text-gray-500 dark:text-gray-400 text-center py-8">No category data available</p>
-              )}
-            </Card>
-
-            <Card className="p-6">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
-                Priority Distribution
-              </h2>
-              <div className="space-y-2 mb-6">
-                {['high', 'medium', 'low'].map(priority => {
-                  const count = analytics.priorityBreakdown[priority] || 0;
-                  const colors: Record<string, string> = {
-                    high: 'bg-red-600',
-                    medium: 'bg-yellow-500',
-                    low: 'bg-green-500'
-                  };
-                  return (
-                    <div key={priority} className="flex items-center justify-between p-2">
-                      <span className="capitalize text-gray-700 dark:text-gray-300">{priority}</span>
-                      <div className="flex items-center space-x-2">
-                        <div className="w-32 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                          <div
-                            className={`${colors[priority]} h-2 rounded-full`}
-                            style={{
-                              width: `${analytics.totalComplaints > 0 ? (count / analytics.totalComplaints) * 100 : 0}%`
-                            }}
-                          ></div>
-                        </div>
-                        <span className="font-semibold text-gray-900 dark:text-white w-8 text-right">
-                          {count}
-                        </span>
+                      <div className="w-full bg-white dark:bg-gray-700 rounded-full h-3 overflow-hidden shadow-inner">
+                        <div
+                          className={`bg-gradient-to-r ${config.gradient} h-3 rounded-full transition-all duration-700 ease-out`}
+                          style={{
+                            width: `${percentage}%`
+                          }}
+                        ></div>
                       </div>
                     </div>
                   );
                 })}
               </div>
 
-              {/* Bar Chart */}
-              <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
-                    data={['high', 'medium', 'low'].map(priority => ({
-                      priority,
-                      count: analytics.priorityBreakdown[priority] || 0,
-                      color: priority === 'high' ? '#EF4444' : priority === 'medium' ? '#F59E0B' : '#10B981'
-                    }))}
-                    margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="priority" />
-                    <YAxis />
-                    <Tooltip />
-                    <Bar dataKey="count" fill="#8884d8" />
-                  </BarChart>
-                </ResponsiveContainer>
+              <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 text-center">
+                  Priority Comparison
+                </h3>
+                <div className="h-72">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart
+                      data={['high', 'medium', 'low'].map(priority => ({
+                        priority: priority.charAt(0).toUpperCase() + priority.slice(1),
+                        count: analytics.priorityBreakdown[priority] || 0,
+                        fill: priority === 'high' ? '#EF4444' : priority === 'medium' ? '#F59E0B' : '#10B981'
+                      }))}
+                      margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                      barCategoryGap={"20%"}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+                      <XAxis 
+                        dataKey="priority" 
+                        tick={{ fontSize: 14, fontWeight: 500 }}
+                        stroke="#6B7280"
+                      />
+                      <YAxis 
+                        tick={{ fontSize: 12 }}
+                        stroke="#6B7280"
+                      />
+                      <Tooltip 
+                        formatter={(value, name) => [value, 'Complaints']}
+                        labelFormatter={(label) => `${label} Priority`}
+                        contentStyle={{
+                          backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                          border: 'none',
+                          borderRadius: '8px',
+                          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                        }}
+                      />
+                      <Bar 
+                        dataKey="count" 
+                        fill="#8884d8" 
+                        radius={[4, 4, 0, 0]}
+                        stroke="#fff"
+                        strokeWidth={2}
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
               </div>
             </Card>
           </div>
 
           {/* Monthly Trends Chart */}
           {analytics.monthlyTrends.length > 0 && (
-            <Card className="p-6">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
-                Monthly Complaint Trends
-              </h2>
-              <div className="h-80">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart
-                    data={analytics.monthlyTrends}
-                    margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="period" />
-                    <YAxis />
-                    <Tooltip />
-                    <Legend />
-                    <Line 
-                      type="monotone" 
-                      dataKey="count" 
-                      stroke="#3B82F6" 
-                      strokeWidth={2}
-                      name="Complaints"
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
+            <Card className="p-8 bg-gradient-to-br from-emerald-50 to-teal-100 dark:from-emerald-900/10 dark:to-teal-900/20 border-emerald-200 dark:border-emerald-800">
+              <div className="flex items-center justify-between mb-8">
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                    Monthly Complaint Trends
+                  </h2>
+                  <p className="text-gray-600 dark:text-gray-400">
+                    Track complaint volume patterns over time
+                  </p>
+                </div>
+                <div className="bg-emerald-600 text-white px-4 py-2 rounded-full text-sm font-semibold flex items-center space-x-2">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                  </svg>
+                  <span>{analytics.monthlyTrends.length} Periods</span>
+                </div>
+              </div>
+              
+              <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+                <div className="h-96">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart
+                      data={analytics.monthlyTrends}
+                      margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
+                    >
+                      <CartesianGrid 
+                        strokeDasharray="3 3" 
+                        stroke="#E5E7EB" 
+                        vertical={false}
+                      />
+                      <XAxis 
+                        dataKey="period" 
+                        tick={{ fontSize: 12, fill: '#6B7280' }}
+                        stroke="#9CA3AF"
+                        angle={-45}
+                        textAnchor="end"
+                        height={80}
+                      />
+                      <YAxis 
+                        tick={{ fontSize: 12, fill: '#6B7280' }}
+                        stroke="#9CA3AF"
+                        label={{ 
+                          value: 'Number of Complaints', 
+                          angle: -90, 
+                          position: 'insideLeft',
+                          style: { textAnchor: 'middle', fill: '#6B7280', fontSize: '12px' }
+                        }}
+                      />
+                      <Tooltip 
+                        formatter={(value: number) => [value, 'Complaints']}
+                        labelFormatter={(label) => `Period: ${label}`}
+                        contentStyle={{
+                          backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                          border: 'none',
+                          borderRadius: '12px',
+                          boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
+                        }}
+                        cursor={{
+                          stroke: '#10B981',
+                          strokeWidth: 2,
+                          strokeDasharray: '5 5'
+                        }}
+                      />
+                      <Legend 
+                        wrapperStyle={{ paddingTop: '20px' }}
+                        iconType="circle"
+                      />
+                      <Line 
+                        type="monotone" 
+                        dataKey="count" 
+                        stroke="#10B981" 
+                        strokeWidth={3}
+                        name="Monthly Complaints"
+                        dot={{ 
+                          fill: '#10B981', 
+                          strokeWidth: 3, 
+                          r: 5,
+                          stroke: '#ffffff'
+                        }}
+                        activeDot={{ 
+                          r: 7, 
+                          fill: '#059669',
+                          stroke: '#ffffff',
+                          strokeWidth: 3
+                        }}
+                        filter="drop-shadow(0px 2px 4px rgba(16, 185, 129, 0.2))"
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+                
+                {/* Summary Stats */}
+                <div className="mt-6 grid grid-cols-3 gap-4">
+                  <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 text-center">
+                    <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
+                      {Math.max(...analytics.monthlyTrends.map((t: any) => t.count))}
+                    </div>
+                    <div className="text-sm text-gray-600 dark:text-gray-400">Peak Month</div>
+                  </div>
+                  <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 text-center">
+                    <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                      {(analytics.monthlyTrends.reduce((sum: number, t: any) => sum + t.count, 0) / analytics.monthlyTrends.length).toFixed(1)}
+                    </div>
+                    <div className="text-sm text-gray-600 dark:text-gray-400">Average/Month</div>
+                  </div>
+                  <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 text-center">
+                    <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                      {analytics.monthlyTrends.reduce((sum: number, t: any) => sum + t.count, 0)}
+                    </div>
+                    <div className="text-sm text-gray-600 dark:text-gray-400">Total Period</div>
+                  </div>
+                </div>
               </div>
             </Card>
           )}
@@ -653,66 +751,6 @@ export const ReportsAnalytics: React.FC = () => {
               </div>
             </Card>
           )}
-        </div>
-      )}
-
-      {!loading && !error && selectedReport === 'hotspots' && (
-        <div className="space-y-6">
-          <Card className="p-6">
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
-              Problem Areas by Location
-            </h2>
-            {Object.keys(analytics.locationBreakdown).length > 0 ? (
-              <div className="space-y-3">
-                {Object.entries(analytics.locationBreakdown)
-                  .sort(([, a], [, b]) => b - a)
-                  .slice(0, 10)
-                  .map(([location, count]) => {
-                    const maxCount = Math.max(...Object.values(analytics.locationBreakdown));
-                    return (
-                      <div key={location} className="flex items-center justify-between">
-                        <span className="text-gray-700 dark:text-gray-300 font-medium min-w-40">{location || 'Unknown'}</span>
-                        <div className="flex items-center gap-4 flex-1">
-                          <div className="w-48 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                            <div
-                              className="h-full bg-red-500"
-                              style={{
-                                width: `${(count / maxCount) * 100}%`
-                              }}
-                            ></div>
-                          </div>
-                          <span className="text-lg font-bold text-gray-900 dark:text-white w-12 text-right">{count}</span>
-                        </div>
-                      </div>
-                    );
-                  })}
-              </div>
-            ) : (
-              <p className="text-gray-500 dark:text-gray-400 text-center py-8">No location data available</p>
-            )}
-          </Card>
-
-          <Card className="p-6">
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
-              Critical Routes (High Complaint Volume)
-            </h2>
-            <div className="grid md:grid-cols-2 gap-4">
-              {Object.entries(analytics.locationBreakdown)
-                .sort(([, a], [, b]) => b - a)
-                .slice(0, 4)
-                .map(([location, count]) => (
-                  <Card key={location} className="p-4 bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800">
-                    <div className="flex justify-between items-center">
-                      <span className="font-semibold text-gray-900 dark:text-white">{location || 'Unknown'}</span>
-                      <span className="bg-red-500 text-white rounded-full px-3 py-1 text-sm font-bold">{count}</span>
-                    </div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
-                      {((count / analytics.totalComplaints) * 100).toFixed(1)}% of total complaints
-                    </p>
-                  </Card>
-                ))}
-            </div>
-          </Card>
         </div>
       )}
     </div>
