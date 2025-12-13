@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { Types } from 'mongoose';
 import User from '../models/User.js';
+import Complaint from '../models/Complaint.js';
 import { isDbConnected } from '../config/db.js';
 import { memoryStore } from '../services/memoryStore.js';
 
@@ -82,6 +83,86 @@ router.post('/', async (req, res) => {
     const user = new User(req.body);
     await user.save();
     return res.json({ success: true, data: user, meta: { storage: 'db' } });
+  } catch (error) {
+    return res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Officer stats endpoint
+router.get('/:id/stats', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    if (!Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ success: false, error: 'Invalid officer ID' });
+    }
+
+    // Use MongoDB aggregation to efficiently compute officer statistics
+    const stats = await Complaint.aggregate([
+      {
+        $match: {
+          assignedTo: id
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          totalAssigned: { $sum: 1 },
+          resolvedComplaints: {
+            $sum: {
+              $cond: [
+                { $in: ['$status', ['resolved', 'closed']] },
+                1,
+                0
+              ]
+            }
+          },
+          ratingSum: {
+            $sum: {
+              $cond: [
+                { $and: [
+                  { $ne: ['$feedback.rating', null] },
+                  { $in: ['$status', ['resolved', 'closed']] }
+                ]},
+                '$feedback.rating',
+                0
+              ]
+            }
+          },
+          ratingCount: {
+            $sum: {
+              $cond: [
+                { $and: [
+                  { $ne: ['$feedback.rating', null] },
+                  { $in: ['$status', ['resolved', 'closed']] }
+                ]},
+                1,
+                0
+              ]
+            }
+          }
+        }
+      }
+    ]);
+
+    const result = stats[0] || {
+      totalAssigned: 0,
+      resolvedComplaints: 0,
+      ratingSum: 0,
+      ratingCount: 0
+    };
+
+    const averageRating = result.ratingCount > 0 ? 
+      Number((result.ratingSum / result.ratingCount).toFixed(1)) : 0;
+
+    return res.json({
+      success: true,
+      data: {
+        totalAssignedComplaints: result.totalAssigned,
+        resolvedComplaints: result.resolvedComplaints,
+        averageRating: averageRating
+      }
+    });
   } catch (error) {
     return res.status(500).json({ success: false, error: error.message });
   }
