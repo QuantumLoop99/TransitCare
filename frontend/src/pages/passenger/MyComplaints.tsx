@@ -4,45 +4,56 @@ import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 import { Complaint } from '../../types';
+import { apiClient } from '../../lib/api';
+import { User } from 'lucide-react';
+
+
 
 export const MyComplaints: React.FC = () => {
   const navigate = useNavigate();
   const [complaints, setComplaints] = useState<Complaint[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'pending' | 'in-progress' | 'resolved'>('all');
-  const [error, setError] = useState<string | null>(null);
+  const [error] = useState<string | null>(null);
+  const [officerMap, setOfficerMap] = useState<Record<string, string>>({});
+
 
 useEffect(() => {
   const fetchComplaints = async () => {
     setLoading(true);
-    setError(null);
-
     try {
       const userEmail = localStorage.getItem('userEmail');
-      const query = userEmail ? `?userEmail=${encodeURIComponent(userEmail)}` : '';
-      
-      // ✅ use the correct backend URL and query parameter
-      const response = await fetch(`http://localhost:3001/api/complaints${query}`, {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      const response = await apiClient.getComplaints({ userEmail });
 
-      if (!response.ok) {
-        throw new Error('Failed to fetch complaints');
+      if (response.success && response.data) {
+        const complaints = response.data;
+        setComplaints(complaints);
+
+        // Collect officer IDs that are ObjectId strings
+        const officerIds = complaints
+          .map(c => (typeof c.assignedTo === 'string' ? c.assignedTo : null))
+          .filter(Boolean) as string[];
+
+        // Fetch officer names for these IDs
+        if (officerIds.length > 0) {
+          try {
+            const res = await apiClient.getUsers();
+            if (res.success && res.data) {
+              const map: Record<string, string> = {};
+              (res.data as any[]).forEach(u => {
+                if (officerIds.includes(u._id)) {
+                  map[u._id] = `${u.firstName} ${u.lastName}`;
+                }
+              });
+              setOfficerMap(map);
+            }
+          } catch (err) {
+            console.error('Error fetching officer names:', err);
+          }
+        }
       }
-
-      const data = await response.json();
-
-      // ✅ backend returns { success, data: [...] }
-      if (data.success && data.data) {
-        setComplaints(data.data);
-      } else {
-        setComplaints([]);
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load complaints');
-      console.error('Error fetching complaints:', err);
+    } catch (error) {
+      console.error('Error fetching complaints:', error);
     } finally {
       setLoading(false);
     }
@@ -216,13 +227,16 @@ useEffect(() => {
                   </p>
                 </div>
                 {complaint.assignedTo && (
-                  <div>
-                    <span className="text-gray-500 dark:text-gray-400">Assigned To:</span>
-                    <p className="font-medium text-gray-900 dark:text-white">
-                      {typeof complaint.assignedTo === 'object' 
+                  <div className="flex items-center gap-1.5">
+                    <User className="w-3.5 h-3.5 flex-shrink-0" />
+                    <span className="font-medium text-gray-700 dark:text-gray-300">
+                      Assigned To:
+                    </span>
+                    <span className="truncate max-w-[140px] text-gray-900 dark:text-white">
+                      {typeof complaint.assignedTo === 'object'
                         ? `${(complaint.assignedTo as any).firstName || ''} ${(complaint.assignedTo as any).lastName || ''}`.trim()
-                        : complaint.assignedTo}
-                    </p>
+                        : officerMap[complaint.assignedTo] || 'Unassigned'}
+                    </span>
                   </div>
                 )}
               </div>

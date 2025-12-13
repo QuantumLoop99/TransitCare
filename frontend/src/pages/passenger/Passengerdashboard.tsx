@@ -20,6 +20,8 @@ export const PassengerDashboard: React.FC = () => {
     inProgress: 0,
     resolved: 0,
   });
+  const [officerMap, setOfficerMap] = useState<Record<string, string>>({});
+
 
   useEffect(() => {
     fetchComplaints();
@@ -30,12 +32,13 @@ export const PassengerDashboard: React.FC = () => {
     try {
       const userEmail = localStorage.getItem('userEmail'); // stored after login
 
+      // Fetch only this passenger's complaints
       const response = await apiClient.getComplaints({ userEmail });
 
       if (response.success && response.data) {
         const complaints = response.data;
 
-        // Calculate stats based only on user's complaints
+        // Calculate complaint stats
         const total = complaints.length;
         const pending = complaints.filter(c => c.status === 'pending').length;
         const inProgress = complaints.filter(c => c.status === 'in-progress').length;
@@ -43,6 +46,28 @@ export const PassengerDashboard: React.FC = () => {
 
         setComplaints(complaints);
         setStats({ total, pending, inProgress, resolved });
+
+        // ---- Fetch officer names for complaints that have assignedTo as ObjectId string ----
+        const officerIds = complaints
+          .map(c => (typeof c.assignedTo === 'string' ? c.assignedTo : null))
+          .filter(Boolean) as string[];
+
+        if (officerIds.length > 0) {
+          try {
+            const res = await apiClient.getUsers();
+            if (res.success && res.data) {
+              const map: Record<string, string> = {};
+              res.data.forEach(u => {
+                if (officerIds.includes(u._id)) {
+                  map[u._id] = `${u.firstName} ${u.lastName}`;
+                }
+              });
+              setOfficerMap(map);
+            }
+          } catch (err) {
+            console.error('Error fetching officer names:', err);
+          }
+        }
       }
     } catch (error) {
       console.error('Error fetching complaints:', error);
@@ -238,12 +263,13 @@ export const PassengerDashboard: React.FC = () => {
                           <div className="flex items-center gap-1.5">
                             <User className="w-3.5 h-3.5 flex-shrink-0" />
                             <span className="truncate max-w-[140px]">
-                              {typeof complaint.assignedTo === 'object' 
+                              {typeof complaint.assignedTo === 'object'
                                 ? `${(complaint.assignedTo as any).firstName || ''} ${(complaint.assignedTo as any).lastName || ''}`.trim()
-                                : complaint.assignedTo}
+                                : officerMap[complaint.assignedTo] || 'Unassigned'}
                             </span>
                           </div>
                         )}
+
                       </div>
                     </div>
 
