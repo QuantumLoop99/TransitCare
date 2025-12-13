@@ -47,6 +47,9 @@ export interface DashboardStats {
   resolvedComplaints: number;
   averageResolutionTime: number;
   activeOfficers?: number;
+  totals?: {
+    registeredOfficers?: number;
+  };
 
   percentages?: {
     pending?: number;
