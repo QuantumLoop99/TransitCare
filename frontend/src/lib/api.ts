@@ -63,9 +63,15 @@ class ApiClient {
   }
 
   submitComplaintFeedback(complaintId: string, feedback: { rating: number; comment?: string }) {
-    return this.request<Complaint>(`/complaints/${complaintId}/feedback`, {
-      method: 'POST',
-      body: JSON.stringify(feedback),
+    return this.request<Complaint>(`/complaints/${complaintId}`, {
+      method: 'PUT',
+      body: JSON.stringify({
+        feedback: {
+          rating: feedback.rating,
+          comment: feedback.comment,
+          submittedAt: new Date().toISOString(),
+        },
+      }),
     });
   }
 
