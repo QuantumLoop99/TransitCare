@@ -290,8 +290,8 @@ export const ComplaintDetails: React.FC = () => {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <Button variant="outline" onClick={() => navigate('/passenger/complaints')}>
-          ← Back to Complaints
+        <Button variant="outline" onClick={() => navigate(-1)}>
+            ← Back to Complaints
         </Button>
         <div className="flex space-x-2">
           <Badge variant={getStatusColor(complaint.status)}>
