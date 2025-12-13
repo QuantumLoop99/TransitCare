@@ -1,0 +1,81 @@
+import React from 'react';
+import { clsx } from 'clsx';
+
+interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+  label?: string;
+  error?: string;
+  helper?: string;
+}
+
+export const Input = React.forwardRef<HTMLInputElement, InputProps>(
+  ({ label, error, helper, className, id, ...props }, ref) => {
+    const inputId = id || label?.toLowerCase().replace(/\s+/g, '-');
+
+    return (
+      <div className="space-y-1">
+        {label && (
+          <label
+            htmlFor={inputId}
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
+            {label}
+          </label>
+        )}
+        <input
+          id={inputId}
+          ref={ref}
+          className={clsx(
+            'block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm',
+            'focus:outline-none focus:ring-blue-500 focus:border-blue-500',
+            'disabled:bg-gray-50 disabled:text-gray-500',
+            error && 'border-red-300 focus:border-red-500 focus:ring-red-500',
+            className
+          )}
+          {...props}
+        />
+        {error && <p className="text-sm text-red-600">{error}</p>}
+        {helper && !error && <p className="text-sm text-gray-500">{helper}</p>}
+      </div>
+    );
+  }
+);
+
+interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
+  label?: string;
+  error?: string;
+  helper?: string;
+}
+
+export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
+  ({ label, error, helper, className, id, ...props }, ref) => {
+    const inputId = id || label?.toLowerCase().replace(/\s+/g, '-');
+
+    return (
+      <div className="space-y-1">
+        {label && (
+          <label
+            htmlFor={inputId}
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
+            {label}
+          </label>
+        )}
+        <textarea
+          id={inputId}
+          ref={ref}
+          rows={4}
+          className={clsx(
+            'block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm',
+            'focus:outline-none focus:ring-blue-500 focus:border-blue-500',
+            'disabled:bg-gray-50 disabled:text-gray-500',
+            error && 'border-red-300 focus:border-red-500 focus:ring-red-500',
+            className
+          )}
+          {...props}
+        />
+        {error && <p className="text-sm text-red-600">{error}</p>}
+        {helper && !error && <p className="text-sm text-gray-500">{helper}</p>}
+      </div>
+    );
+  }
+);
