@@ -62,10 +62,21 @@ class ApiClient {
     });
   }
 
+  submitComplaintFeedback(complaintId: string, feedback: { rating: number; comment?: string }) {
+    return this.request<Complaint>(`/complaints/${complaintId}/feedback`, {
+      method: 'POST',
+      body: JSON.stringify(feedback),
+    });
+  }
+
   // 🔹 Users
   getUsers(filters?: Record<string, any>) {
     const q = filters ? `?${new URLSearchParams(filters).toString()}` : '';
     return this.request<User[]>(`/users${q}`);
+  }
+
+  getUser(id: string) {
+    return this.request<User>(`/users/${id}`);
   }
 
   createUser(data: Omit<User, '_id' | 'createdAt' | 'updatedAt'>) {

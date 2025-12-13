@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
@@ -28,6 +28,7 @@ interface StatusUpdate {
 export const ComplaintDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const [complaint, setComplaint] = useState<Complaint | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [statusTimeline, setStatusTimeline] = useState<StatusUpdate[]>([]);
@@ -35,6 +36,61 @@ export const ComplaintDetails: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [feedbackRating, setFeedbackRating] = useState(0);
   const [feedbackComment, setFeedbackComment] = useState('');
+  const [submittedByUser, setSubmittedByUser] = useState<string>('Loading...');
+  const [assignedToUser, setAssignedToUser] = useState<string>('Loading...');
+
+  // Check if this is an admin view
+  const isAdminView = location.pathname.startsWith('/admin/');
+
+  // Helper function to extract user display name
+  const getUserDisplayName = (user: string | { _id: string; firstName?: string; lastName?: string; email: string } | undefined | null): string => {
+    if (!user) return 'Unknown';
+    
+    if (typeof user === 'string') {
+      // If it's just a string ID, return it for now (ideally backend should populate)
+      return user;
+    }
+    
+    if (typeof user === 'object') {
+      // Try to build full name
+      const firstName = user.firstName?.trim() || '';
+      const lastName = user.lastName?.trim() || '';
+      const fullName = `${firstName} ${lastName}`.trim();
+      
+      // Return full name if available, otherwise fall back to email
+      return fullName || user.email || 'Unknown User';
+    }
+    
+    return 'Unknown';
+  };
+
+  // Function to fetch user details by ID
+  const fetchUserDetails = async (userId: string): Promise<string> => {
+    try {
+      // Try the single user endpoint first
+      let response = await apiClient.getUser(userId);
+      
+      // If single user endpoint fails, try with filters
+      if (!response.success) {
+        console.warn('Single user endpoint failed, trying with filters');
+        const filterResponse = await apiClient.getUsers({ id: userId });
+        if (filterResponse.success && filterResponse.data && filterResponse.data.length > 0) {
+          response = { success: true, data: filterResponse.data[0] };
+        }
+      }
+      
+      if (response.success && response.data) {
+        const user = response.data;
+        const firstName = user.firstName?.trim() || '';
+        const lastName = user.lastName?.trim() || '';
+        const fullName = `${firstName} ${lastName}`.trim();
+        return fullName || user.email || 'Unknown User';
+      }
+    } catch (error) {
+      console.error('Error fetching user details for ID:', userId, error);
+    }
+    return `User (${userId})`; // More descriptive fallback
+  };
 
   //Fetch complaint details
   useEffect(() => {
@@ -46,6 +102,35 @@ export const ComplaintDetails: React.FC = () => {
         const response = await apiClient.getComplaint(id);
         if (response.success && response.data) {
           setComplaint(response.data);
+
+          // Fetch user details if we have string IDs
+          console.log('Complaint data:', response.data);
+          console.log('SubmittedBy type:', typeof response.data.submittedBy, response.data.submittedBy);
+          console.log('AssignedTo type:', typeof response.data.assignedTo, response.data.assignedTo);
+
+          if (typeof response.data.submittedBy === 'string') {
+            console.log('Fetching submittedBy user details for:', response.data.submittedBy);
+            const submittedByName = await fetchUserDetails(response.data.submittedBy);
+            console.log('SubmittedBy result:', submittedByName);
+            setSubmittedByUser(submittedByName);
+          } else {
+            const displayName = getUserDisplayName(response.data.submittedBy);
+            console.log('Using object submittedBy:', displayName);
+            setSubmittedByUser(displayName);
+          }
+
+          if (response.data.assignedTo && typeof response.data.assignedTo === 'string') {
+            console.log('Fetching assignedTo user details for:', response.data.assignedTo);
+            const assignedToName = await fetchUserDetails(response.data.assignedTo);
+            console.log('AssignedTo result:', assignedToName);
+            setAssignedToUser(assignedToName);
+          } else if (response.data.assignedTo) {
+            const displayName = getUserDisplayName(response.data.assignedTo);
+            console.log('Using object assignedTo:', displayName);
+            setAssignedToUser(displayName);
+          } else {
+            setAssignedToUser('Not assigned');
+          }
 
           // Optional placeholder timeline
           setStatusTimeline([
@@ -69,8 +154,11 @@ export const ComplaintDetails: React.FC = () => {
     fetchComplaint();
   }, [id]);
 
-  //Fetch complaint messages (chat)
+  //Fetch complaint messages (chat) - Only for non-admin views
   useEffect(() => {
+    // Skip message fetching for admin views
+    if (isAdminView) return;
+    
     const fetchMessages = async () => {
       if (!id) return;
       try {
@@ -84,7 +172,7 @@ export const ComplaintDetails: React.FC = () => {
     fetchMessages();
     const interval = setInterval(fetchMessages, 5000);
     return () => clearInterval(interval);
-  }, [id]);
+  }, [id, isAdminView]);
 
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !id) return;
@@ -129,9 +217,29 @@ export const ComplaintDetails: React.FC = () => {
   };
 
   const handleSubmitFeedback = async () => {
-    if (feedbackRating === 0) return;
-    // TODO: Submit feedback to API
-    alert('Thank you for your feedback!');
+    if (feedbackRating === 0 || !id) return;
+    
+    try {
+      const feedbackData = {
+        rating: feedbackRating,
+        comment: feedbackComment.trim() || undefined,
+      };
+      
+      const response = await apiClient.submitComplaintFeedback(id, feedbackData);
+      
+      if (response.success && response.data) {
+        // Update the complaint state with the new feedback
+        setComplaint(response.data);
+        setFeedbackRating(0);
+        setFeedbackComment('');
+        alert('Thank you for your feedback!');
+      } else {
+        alert(response.error || 'Failed to submit feedback');
+      }
+    } catch (error) {
+      console.error('Error submitting feedback:', error);
+      alert('Failed to submit feedback');
+    }
   };
 
   const getStatusColor = (status: string) => {
@@ -209,6 +317,20 @@ export const ComplaintDetails: React.FC = () => {
             </h3>
             <p className="text-gray-900 dark:text-white capitalize">{complaint.category}</p>
           </div>
+          <div>
+            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
+              Submitted By
+            </h3>
+            <p className="text-gray-900 dark:text-white">
+              {submittedByUser || 'Unknown'}
+            </p>
+          </div>
+          <div>
+            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
+              Priority
+            </h3>
+            <p className="text-gray-900 dark:text-white capitalize">{complaint.priority}</p>
+          </div>
           {complaint.vehicleNumber && (
             <div>
               <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
@@ -247,9 +369,7 @@ export const ComplaintDetails: React.FC = () => {
                 Assigned To
               </h3>
               <p className="text-gray-900 dark:text-white">
-                {typeof complaint.assignedTo === 'object' 
-                  ? `${(complaint.assignedTo as any).firstName || ''} ${(complaint.assignedTo as any).lastName || ''}`.trim()
-                  : complaint.assignedTo}
+                {assignedToUser || 'Unknown'}
               </p>
             </div>
           )}
@@ -339,81 +459,130 @@ export const ComplaintDetails: React.FC = () => {
         </Card>
       )}
 
-{/* Messages */}
-<Card className="p-6">
-  <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
-    Messages
-  </h2>
-
-  {/* Message list */}
-  <div className="space-y-4 mb-4 max-h-96 overflow-y-auto">
-    {messages.length === 0 ? (
-      <p className="text-gray-500 dark:text-gray-400 text-center py-8">
-        No messages yet. Start a conversation with the transport representative.
-      </p>
-    ) : (
-      messages.map((msg) => (
-        <div
-          key={msg.id || msg._id}
-          className={`flex ${
-            msg.sender === 'passenger' ? 'justify-end' : 'justify-start'
-          }`}
-        >
-          <div
-            className={`max-w-md px-4 py-3 rounded-lg ${
-              msg.sender === 'passenger'
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white'
-            }`}
-          >
-            <p className="font-semibold text-sm mb-1">
-              {(() => {
-                const currentUserId = localStorage.getItem('userId') || undefined;
-                const currentEmail = localStorage.getItem('userEmail') || undefined;
-
-                // True if this message is authored by the current passenger:
-                const authoredByMe =
-                  // prefer id match when present
-                  (msg.senderId && currentUserId && msg.senderId === currentUserId) ||
-                  // fallback: if it's a passenger message and the complaint belongs to my email
-                  (msg.sender === 'passenger' &&
-                    complaint?.submittedBy &&
-                    currentEmail &&
-                    complaint.submittedBy === currentEmail);
-
-                if (authoredByMe) return 'You';
-                if (msg.senderName?.trim()) return msg.senderName;
-                if (msg.sender === 'officer') return 'Officer';
-                if (msg.sender === 'admin') return 'Admin';
-                return 'Passenger';
-              })()}
-            </p>
-
-            <p>{msg.message}</p>
-            <p className="text-xs mt-1 opacity-75">
-              {new Date(msg.timestamp || msg.createdAt || Date.now()).toLocaleString()}
-            </p>
+      {/* Feedback Display - For admins and officers viewing resolved complaints */}
+      {complaint.status === 'resolved' && complaint.feedback && (
+        <Card className="p-6">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center">
+            <span className="text-blue-600 dark:text-blue-400 mr-2">💬</span>
+            Passenger Feedback
+          </h2>
+          <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+            <div className="flex items-center mb-3">
+              <div className="flex items-center space-x-1 mr-4">
+                <span className="text-lg font-medium text-gray-900 dark:text-white">Rating:</span>
+                <div className="flex items-center space-x-1">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <span
+                      key={star}
+                      className={`text-xl ${
+                        star <= complaint.feedback!.rating 
+                          ? 'text-yellow-500' 
+                          : 'text-gray-300 dark:text-gray-600'
+                      }`}
+                    >
+                      ★
+                    </span>
+                  ))}
+                  <span className="ml-2 text-lg font-medium text-gray-900 dark:text-white">
+                    ({complaint.feedback.rating}/5)
+                  </span>
+                </div>
+              </div>
+              <span className="text-sm text-gray-600 dark:text-gray-400">
+                Submitted on {new Date(complaint.feedback.submittedAt).toLocaleString()}
+              </span>
+            </div>
+            {complaint.feedback.comment && (
+              <div className="mt-3 pt-3 border-t border-blue-200 dark:border-blue-700">
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Additional Comments:
+                </p>
+                <p className="text-gray-900 dark:text-white whitespace-pre-wrap">
+                  {complaint.feedback.comment}
+                </p>
+              </div>
+            )}
           </div>
-        </div>
-      ))
-    )}
-  </div>
+        </Card>
+      )}
 
-  {/* Input area */}
-  <div className="flex space-x-2">
-    <Input
-      value={newMessage}
-      onChange={(e) => setNewMessage(e.target.value)}
-      placeholder="Type your message..."
-      onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-    />
-    <Button onClick={handleSendMessage}>Send</Button>
-  </div>
-</Card>
+      {/* Messages - Only show for passengers and officers, not admins */}
+      {!isAdminView && (
+        <Card className="p-6">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
+            Messages
+          </h2>
 
+          {/* Message list */}
+          <div className="space-y-4 mb-4 max-h-96 overflow-y-auto">
+            {messages.length === 0 ? (
+              <p className="text-gray-500 dark:text-gray-400 text-center py-8">
+                No messages yet. Start a conversation with the transport representative.
+              </p>
+            ) : (
+              messages.map((msg) => (
+                <div
+                  key={msg.id || msg._id}
+                  className={`flex ${
+                    msg.sender === 'passenger' ? 'justify-end' : 'justify-start'
+                  }`}
+                >
+                  <div
+                    className={`max-w-md px-4 py-3 rounded-lg ${
+                      msg.sender === 'passenger'
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white'
+                    }`}
+                  >
+                    <p className="font-semibold text-sm mb-1">
+                      {(() => {
+                        const currentUserId = localStorage.getItem('userId') || undefined;
+                        const currentEmail = localStorage.getItem('userEmail') || undefined;
+
+                        // True if this message is authored by the current passenger:
+                        const authoredByMe =
+                          // prefer id match when present
+                          (msg.senderId && currentUserId && msg.senderId === currentUserId) ||
+                          // fallback: if it's a passenger message and the complaint belongs to my email
+                          (msg.sender === 'passenger' &&
+                            complaint?.submittedBy &&
+                            currentEmail &&
+                            ((typeof complaint.submittedBy === 'object' && complaint.submittedBy.email === currentEmail) ||
+                             (typeof complaint.submittedBy === 'string' && complaint.submittedBy === currentEmail)));
+
+                        if (authoredByMe) return 'You';
+                        if (msg.senderName?.trim()) return msg.senderName;
+                        if (msg.sender === 'officer') return 'Officer';
+                        if (msg.sender === 'admin') return 'Admin';
+                        return 'Passenger';
+                      })()}
+                    </p>
+
+                    <p>{msg.message}</p>
+                    <p className="text-xs mt-1 opacity-75">
+                      {new Date(msg.timestamp || msg.createdAt || Date.now()).toLocaleString()}
+                    </p>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* Input area */}
+          <div className="flex space-x-2">
+            <Input
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value)}
+              placeholder="Type your message..."
+              onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+            />
+            <Button onClick={handleSendMessage}>Send</Button>
+          </div>
+        </Card>
+      )}
 
       {/* Feedback Form */}
-      {complaint.status === 'resolved' && (
+      {complaint.status === 'resolved' && !complaint.feedback && (
         <Card className="p-6">
           <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
             Provide Feedback

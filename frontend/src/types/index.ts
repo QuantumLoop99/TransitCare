@@ -21,11 +21,16 @@ export interface Complaint {
   incidentTime?: string;
   location?: string;
   attachments?: string[];
-  submittedBy: string;
-  assignedTo?: string;
+  submittedBy: string | { _id: string; firstName?: string; lastName?: string; email: string };
+  assignedTo?: string | { _id: string; firstName?: string; lastName?: string; email: string };
   resolution?: string;
   resolutionNotes?: string;
   resolutionDate?: string;
+  feedback?: {
+    rating: number;
+    comment?: string;
+    submittedAt: string;
+  };
   aiAnalysis?: {
     priority: string;
     sentiment: number;
