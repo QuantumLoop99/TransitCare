@@ -84,15 +84,6 @@ export const ComplaintDetails: React.FC = () => {
       // Try the single user endpoint first
       let response = await apiClient.getUser(userId);
       
-      // If single user endpoint fails, try with filters
-      if (!response.success) {
-        console.warn('Single user endpoint failed, trying with filters');
-        const filterResponse = await apiClient.getUsers({ id: userId });
-        if (filterResponse.success && filterResponse.data && filterResponse.data.length > 0) {
-          response = { success: true, data: filterResponse.data[0] };
-        }
-      }
-      
       if (response.success && response.data) {
         const user = response.data;
         const firstName = user.firstName?.trim() || '';

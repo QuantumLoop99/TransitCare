@@ -46,6 +46,15 @@ export interface DashboardStats {
   pendingComplaints: number;
   resolvedComplaints: number;
   averageResolutionTime: number;
+  activeOfficers?: number;
+
+  percentages?: {
+    pending?: number;
+    resolved?: number;
+    highPriority?: number;
+    mediumPriority?: number;
+    lowPriority?: number;
+  };
   priorityBreakdown: {
     high: number;
     medium: number;
