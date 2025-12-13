@@ -39,6 +39,20 @@ export const ComplaintDetails: React.FC = () => {
   const [submittedByUser, setSubmittedByUser] = useState<string>('Loading...');
   const [assignedToUser, setAssignedToUser] = useState<string>('Loading...');
 
+  // Check if current user can submit feedback
+  const canSubmitFeedback = () => {
+    if (isAdminView || complaint?.status !== 'resolved' || complaint?.feedback) {
+      return false;
+    }
+    
+    const currentEmail = localStorage.getItem('userEmail');
+    if (!currentEmail) return false;
+    
+    // Check if this is the user's own complaint
+    return (typeof complaint.submittedBy === 'string' && complaint.submittedBy === currentEmail) ||
+           (typeof complaint.submittedBy === 'object' && complaint.submittedBy.email === currentEmail);
+  };
+
   // Check if this is an admin view
   const isAdminView = location.pathname.startsWith('/admin/');
 
@@ -464,7 +478,7 @@ export const ComplaintDetails: React.FC = () => {
         <Card className="p-6">
           <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center">
             <span className="text-blue-600 dark:text-blue-400 mr-2">💬</span>
-            Passenger Feedback
+            Passenger's Feedback
           </h2>
           <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
             <div className="flex items-center mb-3">
@@ -581,38 +595,74 @@ export const ComplaintDetails: React.FC = () => {
         </Card>
       )}
 
-      {/* Feedback Form */}
-      {complaint.status === 'resolved' && !complaint.feedback && (
+      {/* Feedback Form - Only for passengers viewing their own resolved complaints */}
+      {canSubmitFeedback() && (
         <Card className="p-6">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
-            Provide Feedback
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center">
+            <span className="text-blue-600 dark:text-blue-400 mr-2">⭐</span>
+            Rate Your Experience
           </h2>
           <p className="text-gray-600 dark:text-gray-400 mb-4">
-            How satisfied are you with the resolution?
+            How satisfied are you with how your complaint was resolved?
           </p>
-          <div className="flex space-x-2 mb-4">
-            {[1, 2, 3, 4, 5].map((star) => (
-              <button
-                key={star}
-                onClick={() => setFeedbackRating(star)}
-                className={`text-3xl ${
-                  star <= feedbackRating ? 'text-yellow-500' : 'text-gray-300 dark:text-gray-600'
-                }`}
-              >
-                ★
-              </button>
-            ))}
+          <div className="mb-6">
+            <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+              Click to rate (1 = Poor, 5 = Excellent):
+            </p>
+            <div className="flex space-x-1">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                  key={star}
+                  onClick={() => setFeedbackRating(star)}
+                  className={`text-4xl transition-colors hover:scale-110 transform transition-transform ${
+                    star <= feedbackRating ? 'text-yellow-500' : 'text-gray-300 dark:text-gray-600 hover:text-yellow-300'
+                  }`}
+                  title={`${star} star${star !== 1 ? 's' : ''}`}
+                >
+                  ★
+                </button>
+              ))}
+              {feedbackRating > 0 && (
+                <span className="ml-3 text-lg font-medium text-gray-700 dark:text-gray-300 self-center">
+                  {feedbackRating}/5 stars
+                </span>
+              )}
+            </div>
           </div>
-          <textarea
-            value={feedbackComment}
-            onChange={(e) => setFeedbackComment(e.target.value)}
-            placeholder="Additional comments (optional)"
-            rows={4}
-            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white mb-4"
-          />
-          <Button onClick={handleSubmitFeedback} disabled={feedbackRating === 0}>
-            Submit Feedback
-          </Button>
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Additional Comments (Optional)
+            </label>
+            <textarea
+              value={feedbackComment}
+              onChange={(e) => setFeedbackComment(e.target.value)}
+              placeholder="Tell us more about your experience or suggest improvements..."
+              rows={4}
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white resize-none"
+              maxLength={500}
+            />
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              {feedbackComment.length}/500 characters
+            </p>
+          </div>
+          <div className="flex justify-end space-x-3">
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setFeedbackRating(0);
+                setFeedbackComment('');
+              }}
+            >
+              Clear
+            </Button>
+            <Button 
+              onClick={handleSubmitFeedback} 
+              disabled={feedbackRating === 0}
+              className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300"
+            >
+              Submit Feedback
+            </Button>
+          </div>
         </Card>
       )}
     </div>

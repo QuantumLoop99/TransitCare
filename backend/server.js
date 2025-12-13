@@ -108,7 +108,12 @@ const complaintSchema = new Schema({
     confidence: Number,
     reasoning: String,
   },
-  messages: [messageSchema]
+  messages: [messageSchema],
+  feedback: {
+  rating: { type: Number, min: 1, max: 5 },
+  comment: { type: String },
+  submittedAt: { type: Date },
+}
 }, {
   timestamps: true,
 });
@@ -405,6 +410,49 @@ app.post('/api/complaints/:id/prioritize', async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
+
+// -------------------- Feedback Routes --------------------
+app.post('/api/complaints/:id/feedback', async (req, res) => {
+  try {
+    const { rating, comment } = req.body;
+    if (!rating) {
+      return res.status(400).json({ success: false, error: 'Rating is required' });
+    }
+
+    const complaint = await Complaint.findById(req.params.id);
+    if (!complaint) {
+      return res.status(404).json({ success: false, error: 'Complaint not found' });
+    }
+
+    complaint.feedback = {
+      rating,
+      comment: comment || '',
+      submittedAt: new Date(),
+    };
+
+    await complaint.save();
+
+    res.json({ success: true, data: complaint });
+  } catch (error) {
+    console.error('Feedback submission error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Get feedback for admin
+app.get('/api/complaints/:id/feedback', async (req, res) => {
+  try {
+    const complaint = await Complaint.findById(req.params.id).select('feedback');
+    if (!complaint) {
+      return res.status(404).json({ success: false, error: 'Complaint not found' });
+    }
+
+    res.json({ success: true, data: complaint.feedback || null });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 
 // Dashboard Stats
 app.get('/api/dashboard/stats', async (req, res) => {

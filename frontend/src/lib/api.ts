@@ -69,6 +69,11 @@ class ApiClient {
     });
   }
 
+getComplaintFeedback(complaintId: string) {
+  return this.request<any>(`/complaints/${complaintId}/feedback`);
+}
+
+
   // 🔹 Users
   getUsers(filters?: Record<string, any>) {
     const q = filters ? `?${new URLSearchParams(filters).toString()}` : '';
