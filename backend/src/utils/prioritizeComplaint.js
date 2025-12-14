@@ -1,4 +1,5 @@
 import { groqClient, GROQ_MODELS } from '../config/groq.js';
+import { getSetting } from '../models/Settings.js';
 
 export async function prioritizeComplaint(complaint, client = groqClient) {
   const prompt = `
@@ -29,6 +30,18 @@ export async function prioritizeComplaint(complaint, client = groqClient) {
   `;
 
   try {
+    // Check if AI prioritization is enabled in settings
+    const isAiEnabled = await getSetting('aiPrioritization', true);
+    
+    if (!isAiEnabled) {
+      return {
+        priority: 'medium',
+        reasoning: 'AI prioritization disabled in system settings, defaulting to medium',
+        sentiment: 0,
+        confidence: 0,
+      };
+    }
+
     if (!client) {
       return {
         priority: 'medium',

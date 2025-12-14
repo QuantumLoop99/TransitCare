@@ -2,6 +2,7 @@ import complaintsRouter from './complaints.js';
 import dashboardRouter from './dashboard.js';
 import usersRouter from './users.js';
 import adminRouter from './admin.js';
+import settingsRouter from './settings.js';
 import notificationsRouter from './notifications.js';
 import reportsRouter from './reports.js';
 import migrateRouter from './migrate.js';
@@ -12,6 +13,7 @@ export function registerRoutes(app) {
   app.use('/api/dashboard', dashboardRouter);
   app.use('/api/users', usersRouter);
   app.use('/api/admin', adminRouter);
+  app.use('/api/admin', settingsRouter);
   app.use('/api/notifications', notificationsRouter);
   app.use('/api/reports', reportsRouter);
   app.use('/api/migrate', migrateRouter);

@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/input';
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api';
 
 export const SystemSettings: React.FC = () => {
   const [notificationSettings, setNotificationSettings] = useState({
@@ -22,6 +24,41 @@ export const SystemSettings: React.FC = () => {
   });
 
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Load settings from backend on component mount
+  useEffect(() => {
+    loadSettings();
+  }, []);
+
+  const loadSettings = async () => {
+    try {
+      setIsLoading(true);
+      const response = await fetch(`${API_BASE_URL}/admin/settings`, {
+        headers: {
+          'x-admin-secret': '8b3f1a6d9c2e4f0a7d8c5b6e3a1f2b4c6d7e8f90123456789abcdef01234567',
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        const settings = result.data;
+        
+        // Update system settings with data from backend
+        setSystemSettings(prevSettings => ({
+          ...prevSettings,
+          aiPrioritization: settings.aiPrioritization ?? true,
+          autoAssignment: settings.autoAssignment ?? true,
+          maintenanceMode: settings.maintenanceMode ?? false,
+        }));
+      }
+    } catch (error) {
+      console.error('Failed to load settings:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleNotificationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setNotificationSettings({
@@ -40,11 +77,38 @@ export const SystemSettings: React.FC = () => {
 
   const handleSave = async () => {
     setIsSaving(true);
-    // TODO: Save settings to API
-    setTimeout(() => {
+    try {
+      // Only save the AI prioritization setting for now
+      const settingsToSave = {
+        aiPrioritization: systemSettings.aiPrioritization,
+        autoAssignment: systemSettings.autoAssignment,
+        maintenanceMode: systemSettings.maintenanceMode,
+      };
+
+      const response = await fetch(`${API_BASE_URL}/admin/settings`, {
+        method: 'PUT',
+        headers: {
+          'x-admin-secret': '8b3f1a6d9c2e4f0a7d8c5b6e3a1f2b4c6d7e8f90123456789abcdef01234567',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          settings: settingsToSave,
+          updatedBy: 'admin' // You can get this from user context
+        }),
+      });
+
+      if (response.ok) {
+        alert('Settings saved successfully!');
+      } else {
+        const error = await response.json();
+        alert(`Failed to save settings: ${error.error || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Error saving settings:', error);
+      alert('Failed to save settings. Please try again.');
+    } finally {
       setIsSaving(false);
-      alert('Settings saved successfully!');
-    }, 1500);
+    }
   };
 
   return (
