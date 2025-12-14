@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/input';
 import { Card } from '../../components/ui/Card';
@@ -36,6 +36,11 @@ export const ContactPage: React.FC = () => {
     }, 1500);
   };
 
+    // Scroll to top on mount
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+  }, []);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
       <Header />
@@ -62,13 +67,13 @@ export const ContactPage: React.FC = () => {
           <Card className="p-6 text-center">
             <div className="text-blue-600 dark:text-blue-400 text-4xl mb-4">📞</div>
             <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">Phone</h3>
-            <p className="text-gray-600 dark:text-gray-400">+1 (555) 123-4567</p>
+            <p className="text-gray-600 dark:text-gray-400">+11 123 4567</p>
           </Card>
 
           <Card className="p-6 text-center">
             <div className="text-blue-600 dark:text-blue-400 text-4xl mb-4">📍</div>
             <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">Office</h3>
-            <p className="text-gray-600 dark:text-gray-400">123 Transit Ave, City, State 12345</p>
+            <p className="text-gray-600 dark:text-gray-400">341 Elvitigala Mawatha, Colombo 00500, Sri Lanka</p>
           </Card>
         </div>
 
@@ -209,8 +214,8 @@ export const ContactPage: React.FC = () => {
       </div>
 
       {/* Footer */}
-      <footer className="bg-white dark:bg-gray-800 shadow-md mt-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <footer className="bg-blue-200 dark:bg-gray-800 shadow-md mt-0">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <p className="text-center text-gray-600 dark:text-gray-400">
             © 2025 TransitCare. All rights reserved.
           </p>

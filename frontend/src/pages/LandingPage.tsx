@@ -35,6 +35,10 @@ export const LandingPage: React.FC = () => {
     { icon: Clock, title: "Real-time Updates", description: "Get instant notifications about complaint status changes and resolution updates." },
     { icon: CheckCircle, title: "Easy Resolution", description: "Streamlined workflow for transport officers to efficiently resolve complaints." },
   ];
+      // Scroll to top on mount
+    useEffect(() => {
+      window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+    }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
@@ -205,6 +209,15 @@ export const LandingPage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Footer */}
+      <footer className="bg-blue-700 dark:bg-gray-800 shadow-md mt-0.4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <p className="text-center text-white">
+            © 2025 TransitCare. All rights reserved.
+          </p>
+        </div>
+      </footer>
     </div>
   );
 };

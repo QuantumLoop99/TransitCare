@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../../components/ui/Button';
 import { Header } from '../../components/layout/Header';
@@ -6,6 +6,10 @@ import { Header } from '../../components/layout/Header';
 export const AboutPage: React.FC = () => {
   const navigate = useNavigate();
 
+  // Scroll to top on mount
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+  }, []);
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
       <Header />
@@ -135,36 +139,31 @@ export const AboutPage: React.FC = () => {
         </div>
 
         {/* CTA Section */}
-        <div className="text-center bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg shadow-xl p-12">
+        <div className="py-16 bg-blue-600">
+        <div className="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
           <h2 className="text-3xl font-bold text-white mb-4">
             Ready to Make a Difference?
           </h2>
           <p className="text-xl text-blue-100 mb-8">
             Join thousands of passengers making public transportation better
           </p>
-          <div className="flex justify-center space-x-4">
-            <Button
-              size="lg"
-              variant="outline"
-              className="bg-white text-blue-600 hover:bg-gray-100"
-              onClick={() => navigate('/auth/sign-up')}
-            >
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Button size="lg" className="w-full sm:w-auto border-white"
+              onClick={() => navigate('/auth/sign-up')}>
               Get Started
             </Button>
-            <Button
-              size="lg"
-              className="bg-indigo-700 text-white hover:bg-indigo-800"
-              onClick={() => navigate('/contact')}
-            >
+            <Button size="lg" className="w-full sm:w-auto border-white"
+              onClick={() => navigate('/contact')}>
               Contact Us
             </Button>
           </div>
         </div>
       </div>
+      </div>
 
       {/* Footer */}
-      <footer className="bg-white dark:bg-gray-800 shadow-md mt-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <footer className="bg-blue-200 dark:bg-gray-800 shadow-md mt-0">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <p className="text-center text-gray-600 dark:text-gray-400">
             © 2025 TransitCare. All rights reserved.
           </p>
