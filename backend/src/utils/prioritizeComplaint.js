@@ -1,6 +1,6 @@
-import { openaiClient } from '../config/openai.js';
+import { groqClient, GROQ_MODELS } from '../config/groq.js';
 
-export async function prioritizeComplaint(complaint, client = openaiClient) {
+export async function prioritizeComplaint(complaint, client = groqClient) {
   const prompt = `
     Analyze this public transport complaint and determine its priority level:
 
@@ -39,7 +39,7 @@ export async function prioritizeComplaint(complaint, client = openaiClient) {
     }
 
     const completion = await client.chat.completions.create({
-      model: 'gpt-3.5-turbo',
+      model: GROQ_MODELS.DEFAULT, // Using Mixtral 8x7B for optimal speed and quality
       messages: [
         {
           role: 'system',
@@ -58,9 +58,9 @@ export async function prioritizeComplaint(complaint, client = openaiClient) {
     return analysis;
   } catch (error) {
     if (error.code === 'insufficient_quota' || error.status === 429) {
-      console.warn('OpenAI API quota exceeded, using default priority');
+      console.warn('Groq API quota exceeded, using default priority');
     } else {
-      console.error('OpenAI API error:', error.message || error);
+      console.error('Groq API error:', error.message || error);
     }
     return {
       priority: 'medium',
