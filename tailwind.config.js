@@ -16,4 +16,10 @@ export default {
     extend: {},
   },
   plugins: [],
+  extend: {
+  fontFamily: {
+    inter: ['Inter', 'sans-serif'],
+  },
+}
+
 };

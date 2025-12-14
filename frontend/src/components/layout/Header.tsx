@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useUser as useClerkUser } from '@clerk/clerk-react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Bus, LogOut, User } from 'lucide-react';
+import { LogOut, User } from 'lucide-react';
+import Logo from '../../assets/Logo.jpg';
 import { Button } from '../ui/Button';
 import { ThemeToggle } from '../ui/ThemeToggle';
 import { apiClient } from '../../lib/api';
@@ -91,7 +92,7 @@ export const Header: React.FC<HeaderProps> = ({ user, onSignOut }) => {
   };
 
   return (
-    <header className="sticky top-0 z-30 bg-white/80 dark:bg-gray-900/80 backdrop-blur border-b border-gray-200/70 dark:border-gray-800/70 shadow-sm">
+    <header className="sticky top-0 z-30 bg-blue-100/90 dark:bg-gray-900/80 backdrop-blur border-b border-gray-200/70 dark:border-gray-800/70 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
@@ -99,12 +100,12 @@ export const Header: React.FC<HeaderProps> = ({ user, onSignOut }) => {
             to={user ? getDashboardLink(user.role) : '/'}
             className="flex items-center space-x-2 text-xl font-bold text-blue-600 hover:text-blue-700"
           >
-            <Bus className="w-8 h-8" />
+            <img src={Logo} alt="TransitCare Logo" className="w-9 h-8 rounded-full bg-white" />
             <span>TransitCare</span>
           </Link>
 
           {/* Navigation */}
-          <nav className="hidden md:flex items-center space-x-8">
+          <nav className="hidden md:flex items-center space-x-8 font-inter font-bold">
             {user ? (
               <>
                 <Link to={getDashboardLink(user.role)} className={linkClass}>
