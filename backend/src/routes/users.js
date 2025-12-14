@@ -88,6 +88,58 @@ router.post('/', async (req, res) => {
   }
 });
 
+// UPDATE USER (PATCH)
+router.patch('/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Validate MongoDB ObjectId
+    if (!Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid user ID'
+      });
+    }
+
+    // Prevent updating protected fields
+    const {
+      _id,
+      id: bodyId,
+      createdAt,
+      updatedAt,
+      password,
+      clerkId,
+      ...updateData
+    } = req.body;
+
+    const updatedUser = await User.findByIdAndUpdate(
+      id,
+      updateData,
+      {
+        new: true,
+        runValidators: true
+      }
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({
+        success: false,
+        error: 'User not found'
+      });
+    }
+
+    return res.json({
+      success: true,
+      data: updatedUser
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
 // Officer stats endpoint
 router.get('/:id/stats', async (req, res) => {
   try {
@@ -228,6 +280,22 @@ router.post('/onboard', async (req, res) => {
     }
     console.error('Onboard error:', error.message);
     return res.status(500).json({ success: false, error: error.message || 'Unknown error' });
+  }
+});
+// DELETE USER
+router.delete('/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ success: false, error: 'Invalid user ID' });
+    }
+    const deleted = await User.findByIdAndDelete(id);
+    if (!deleted) {
+      return res.status(404).json({ success: false, error: 'User not found' });
+    }
+    return res.json({ success: true, message: 'User deleted' });
+  } catch (error) {
+    return res.status(500).json({ success: false, error: error.message });
   }
 });
 

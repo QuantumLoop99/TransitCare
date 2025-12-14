@@ -55,8 +55,8 @@ export const UserManagement: React.FC = () => {
     if (confirm('Are you sure you want to delete this user?')) {
       try {
         const response = await apiClient.deleteUser(userId);
-        if (response.success) {
-          setUsers(users.filter(u => u.id !== userId));
+            if (response.success) {
+              setUsers(users.filter(u => (u._id || u.id) !== userId));
         } else {
           alert('Failed to delete user');
         }
@@ -202,7 +202,7 @@ export const UserManagement: React.FC = () => {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => navigate(`/admin/users/edit/${user.id}`)}
+                        onClick={() => navigate(`/admin/users/edit/${user._id}`)}
                         className="mr-2"
                       >
                         Edit
@@ -210,7 +210,7 @@ export const UserManagement: React.FC = () => {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handleDeleteUser(user.id)}
+                        onClick={() => handleDeleteUser(user._id)}
                         className="text-red-600 hover:text-red-700"
                       >
                         Delete

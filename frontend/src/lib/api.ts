@@ -88,9 +88,21 @@ getComplaintFeedback(complaintId: string) {
     return this.request<User>('/users', { method: 'POST', body: JSON.stringify(data) });
   }
 
-  updateUser(id: string, data: Partial<Omit<User, 'id' | '_id' | 'createdAt' | 'updatedAt'>>) {
-    return this.request<User>(`/users/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+updateUser(
+  id: string,
+  data: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    role: 'passenger' | 'officer' | 'admin';
   }
+) {
+  return this.request(`/users/${id}`, {
+    method: 'PATCH',   // ✅ MUST be PATCH
+    body: JSON.stringify(data),
+  });
+}
+
 
   deleteUser(id: string) {
     return this.request<{ success: boolean }>(`/users/${id}`, { method: 'DELETE' });
