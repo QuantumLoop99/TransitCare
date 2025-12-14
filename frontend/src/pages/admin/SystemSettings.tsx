@@ -78,11 +78,9 @@ export const SystemSettings: React.FC = () => {
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      // Only save the AI prioritization setting for now
+      // Only save the AI prioritization setting (the only implemented feature)
       const settingsToSave = {
         aiPrioritization: systemSettings.aiPrioritization,
-        autoAssignment: systemSettings.autoAssignment,
-        maintenanceMode: systemSettings.maintenanceMode,
       };
 
       const response = await fetch(`${API_BASE_URL}/admin/settings`, {
@@ -123,10 +121,15 @@ export const SystemSettings: React.FC = () => {
       </div>
 
       {/* Notification Settings */}
-      <Card className="p-6">
-        <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
-          Notification Settings
-        </h2>
+      <Card className="p-6 opacity-60">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+            Notification Settings
+          </h2>
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
+            Coming Soon
+          </span>
+        </div>
         <div className="space-y-4">
           <div className="flex items-center justify-between py-3 border-b border-gray-200 dark:border-gray-700">
             <div>
@@ -142,7 +145,8 @@ export const SystemSettings: React.FC = () => {
               name="emailNotifications"
               checked={notificationSettings.emailNotifications}
               onChange={handleNotificationChange}
-              className="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              disabled
+              className="h-5 w-5 text-gray-400 border-gray-300 rounded cursor-not-allowed"
             />
           </div>
 
@@ -160,7 +164,8 @@ export const SystemSettings: React.FC = () => {
               name="smsNotifications"
               checked={notificationSettings.smsNotifications}
               onChange={handleNotificationChange}
-              className="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              disabled
+              className="h-5 w-5 text-gray-400 border-gray-300 rounded cursor-not-allowed"
             />
           </div>
 
@@ -178,7 +183,8 @@ export const SystemSettings: React.FC = () => {
               name="pushNotifications"
               checked={notificationSettings.pushNotifications}
               onChange={handleNotificationChange}
-              className="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              disabled
+              className="h-5 w-5 text-gray-400 border-gray-300 rounded cursor-not-allowed"
             />
           </div>
 
@@ -196,7 +202,8 @@ export const SystemSettings: React.FC = () => {
               name="notifyOnNewComplaint"
               checked={notificationSettings.notifyOnNewComplaint}
               onChange={handleNotificationChange}
-              className="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              disabled
+              className="h-5 w-5 text-gray-400 border-gray-300 rounded cursor-not-allowed"
             />
           </div>
 
@@ -214,7 +221,8 @@ export const SystemSettings: React.FC = () => {
               name="notifyOnStatusChange"
               checked={notificationSettings.notifyOnStatusChange}
               onChange={handleNotificationChange}
-              className="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              disabled
+              className="h-5 w-5 text-gray-400 border-gray-300 rounded cursor-not-allowed"
             />
           </div>
 
@@ -232,7 +240,8 @@ export const SystemSettings: React.FC = () => {
               name="notifyOnResolution"
               checked={notificationSettings.notifyOnResolution}
               onChange={handleNotificationChange}
-              className="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              disabled
+              className="h-5 w-5 text-gray-400 border-gray-300 rounded cursor-not-allowed"
             />
           </div>
         </div>
@@ -240,14 +249,20 @@ export const SystemSettings: React.FC = () => {
 
       {/* System Configuration */}
       <Card className="p-6">
-        <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
-          System Configuration
-        </h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+            System Configuration
+          </h2>
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+            Partially Available
+          </span>
+        </div>
         <div className="space-y-4">
-          <div className="flex items-center justify-between py-3 border-b border-gray-200 dark:border-gray-700">
+          <div className="flex items-center justify-between py-3 border-b border-gray-200 dark:border-gray-700 opacity-60">
             <div>
               <label className="font-medium text-gray-900 dark:text-white">
                 Maintenance Mode
+                <span className="ml-2 text-xs text-yellow-600 dark:text-yellow-400">(Coming Soon)</span>
               </label>
               <p className="text-sm text-gray-600 dark:text-gray-400">
                 Temporarily disable the system for maintenance
@@ -258,14 +273,16 @@ export const SystemSettings: React.FC = () => {
               name="maintenanceMode"
               checked={systemSettings.maintenanceMode}
               onChange={handleSystemChange}
-              className="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              disabled
+              className="h-5 w-5 text-gray-400 border-gray-300 rounded cursor-not-allowed"
             />
           </div>
 
-          <div className="flex items-center justify-between py-3 border-b border-gray-200 dark:border-gray-700">
+          <div className="flex items-center justify-between py-3 border-b border-gray-200 dark:border-gray-700 opacity-60">
             <div>
               <label className="font-medium text-gray-900 dark:text-white">
                 Auto-Assignment
+                <span className="ml-2 text-xs text-yellow-600 dark:text-yellow-400">(Coming Soon)</span>
               </label>
               <p className="text-sm text-gray-600 dark:text-gray-400">
                 Automatically assign complaints to officers
@@ -276,7 +293,8 @@ export const SystemSettings: React.FC = () => {
               name="autoAssignment"
               checked={systemSettings.autoAssignment}
               onChange={handleSystemChange}
-              className="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              disabled
+              className="h-5 w-5 text-gray-400 border-gray-300 rounded cursor-not-allowed"
             />
           </div>
 
@@ -284,6 +302,7 @@ export const SystemSettings: React.FC = () => {
             <div>
               <label className="font-medium text-gray-900 dark:text-white">
                 AI-Powered Prioritization
+                <span className="ml-2 text-xs text-green-600 dark:text-green-400">✓ Available</span>
               </label>
               <p className="text-sm text-gray-600 dark:text-gray-400">
                 Use AI to automatically prioritize complaints
@@ -298,29 +317,33 @@ export const SystemSettings: React.FC = () => {
             />
           </div>
 
-          <div className="py-3 border-b border-gray-200 dark:border-gray-700">
+          <div className="py-3 border-b border-gray-200 dark:border-gray-700 opacity-60">
             <label className="block font-medium text-gray-900 dark:text-white mb-2">
               Maximum File Upload Size (MB)
+              <span className="ml-2 text-xs text-yellow-600 dark:text-yellow-400">(Coming Soon)</span>
             </label>
             <Input
               type="number"
               name="maxFileSize"
               value={systemSettings.maxFileSize}
               onChange={handleSystemChange}
-              className="max-w-xs"
+              disabled
+              className="max-w-xs opacity-50 cursor-not-allowed"
             />
           </div>
 
-          <div className="py-3">
+          <div className="py-3 opacity-60">
             <label className="block font-medium text-gray-900 dark:text-white mb-2">
               Session Timeout (minutes)
+              <span className="ml-2 text-xs text-yellow-600 dark:text-yellow-400">(Coming Soon)</span>
             </label>
             <Input
               type="number"
               name="sessionTimeout"
               value={systemSettings.sessionTimeout}
               onChange={handleSystemChange}
-              className="max-w-xs"
+              disabled
+              className="max-w-xs opacity-50 cursor-not-allowed"
             />
           </div>
         </div>
