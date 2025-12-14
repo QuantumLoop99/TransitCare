@@ -17,13 +17,14 @@ export const LandingPage: React.FC = () => {
   const images = [Bus1, Bus2, Bus3, Bus4];
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  // Slide every 3 seconds
+  // Slide every 5 seconds
   useEffect(() => {
-    const interval = setInterval(() => {
+    let timeout: ReturnType<typeof setTimeout>;
+    timeout = setTimeout(() => {
       setCurrentIndex((prev) => (prev + 1) % images.length);
-    }, 4000);
-    return () => clearInterval(interval);
-  }, []);
+    }, 5000);
+    return () => clearTimeout(timeout);
+  }, [currentIndex, images.length]);
 
   // Features data (unchanged)
   const features = [
