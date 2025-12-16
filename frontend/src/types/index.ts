@@ -21,6 +21,7 @@ export interface Complaint {
   dateTime: string;
   incidentTime?: string;
   location?: string;
+  district?: string;
   attachments?: string[];
   submittedBy: string | { _id: string; firstName?: string; lastName?: string; email: string };
   assignedTo?: string | { _id: string; firstName?: string; lastName?: string; email: string };
@@ -73,4 +74,6 @@ export interface ApiResponse<T> {
   message?: string;
 }
 
-export type ComplaintFormData = Omit<Complaint, 'id' | 'createdAt' | 'updatedAt' | 'submittedBy' | 'aiAnalysis'>;
+export type ComplaintFormData = Omit<Complaint, 'id' | 'createdAt' | 'updatedAt' | 'submittedBy' | 'aiAnalysis'> & {
+  district: string;
+};
