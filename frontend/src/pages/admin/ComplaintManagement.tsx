@@ -17,6 +17,7 @@ export const ComplaintManagement: React.FC = () => {
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterPriority, setFilterPriority] = useState<string>('all');
   const [filterCategory, setFilterCategory] = useState<string>('all');
+  const [filterDistrict, setFilterDistrict] = useState<string>('all');
   const [officerMap, setOfficerMap] = useState<Record<string, string>>({});
 
 
@@ -64,7 +65,8 @@ export const ComplaintManagement: React.FC = () => {
     const matchesStatus = filterStatus === 'all' || complaint.status === filterStatus;
     const matchesPriority = filterPriority === 'all' || complaint.priority === filterPriority;
     const matchesCategory = filterCategory === 'all' || complaint.category === filterCategory;
-    return matchesSearch && matchesStatus && matchesPriority && matchesCategory;
+    const matchesDistrict = filterDistrict === 'all' || complaint.district === filterDistrict;
+    return matchesSearch && matchesStatus && matchesPriority && matchesCategory && matchesDistrict;
   });
 
   const getStatusColor = (status: string) => {
@@ -110,7 +112,7 @@ export const ComplaintManagement: React.FC = () => {
 
       {/* Filters */}
       <Card className="p-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Search
@@ -173,6 +175,43 @@ export const ComplaintManagement: React.FC = () => {
               <option value="other">Other</option>
             </select>
           </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              District
+            </label>
+            <select
+              value={filterDistrict}
+              onChange={(e) => setFilterDistrict(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            >
+              <option value="all">All Districts</option>
+              <option value="Ampara">Ampara</option>
+              <option value="Anuradhapura">Anuradhapura</option>
+              <option value="Badulla">Badulla</option>
+              <option value="Batticaloa">Batticaloa</option>
+              <option value="Colombo">Colombo</option>
+              <option value="Galle">Galle</option>
+              <option value="Gampaha">Gampaha</option>
+              <option value="Hambantota">Hambantota</option>
+              <option value="Jaffna">Jaffna</option>
+              <option value="Kalutara">Kalutara</option>
+              <option value="Kandy">Kandy</option>
+              <option value="Kegalle">Kegalle</option>
+              <option value="Kilinochchi">Kilinochchi</option>
+              <option value="Kurunegala">Kurunegala</option>
+              <option value="Mannar">Mannar</option>
+              <option value="Matale">Matale</option>
+              <option value="Matara">Matara</option>
+              <option value="Monaragala">Monaragala</option>
+              <option value="Mullaitivu">Mullaitivu</option>
+              <option value="Nuwara Eliya">Nuwara Eliya</option>
+              <option value="Polonnaruwa">Polonnaruwa</option>
+              <option value="Puttalam">Puttalam</option>
+              <option value="Ratnapura">Ratnapura</option>
+              <option value="Trincomalee">Trincomalee</option>
+              <option value="Vavuniya">Vavuniya</option>
+              </select>
+           </div>
         </div>
       </Card>
 
@@ -277,9 +316,9 @@ export const ComplaintManagement: React.FC = () => {
                   </p>
                 </div>
                 <div>
-                  <span className="text-gray-500 dark:text-gray-400">Submitted:</span>
-                  <p className="font-medium text-gray-900 dark:text-white">
-                    {new Date(complaint.createdAt).toLocaleDateString()}
+                  <span className="text-gray-500 dark:text-gray-400">District:</span>
+                  <p className="font-medium text-gray-900 dark:text-white capitalize">
+                    {complaint.district || 'N/A'}
                   </p>
                 </div>
               </div>

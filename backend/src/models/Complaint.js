@@ -19,6 +19,7 @@ const complaintSchema = new Schema({
   route: String,
   dateTime: { type: Date, required: true },
   location: String,
+  district: { type: String },
   attachments: [String],
   submittedBy: { type: String, required: true },
   assignedTo: String,
