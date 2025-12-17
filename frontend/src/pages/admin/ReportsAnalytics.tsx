@@ -504,8 +504,8 @@ export const ReportsAnalytics: React.FC = () => {
                     Your transit system received ${analytics.totalComplaints} complaints during the selected ${dateRange} period. 
                     With a ${analytics.resolutionRate}% resolution rate, your team has successfully addressed 
                     ${analytics.resolvedComplaints} issues. 
-                    ${analytics.resolutionRate >= 80 ? 'This demonstrates excellent customer service performance.' : 
-                      analytics.resolutionRate >= 60 ? 'There is room for improvement in resolution efficiency.' : 
+                    ${(Number(analytics.resolutionRate) >= 80) ? 'This demonstrates excellent customer service performance.' : 
+                      (Number(analytics.resolutionRate) >= 60) ? 'There is room for improvement in resolution efficiency.' : 
                       'Consider reviewing resolution processes to improve customer satisfaction.'}
                   </p>
                 </div>
@@ -997,10 +997,10 @@ export const ReportsAnalytics: React.FC = () => {
                             outerRadius={90}
                             fill="#3B82F6"
                             dataKey="value"
-                            label={({name, percent}) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                            label={({percent, name}) => `${name}: ${(percent * 100).toFixed(0)}%`}
                             labelLine={false}
                           >
-                            {Object.entries(analytics.categoryBreakdown).map((entry, index) => (
+                            {Object.entries(analytics.categoryBreakdown).map(([,], index) => (
                               <Cell key={`cell-${index}`} fill={`hsl(${index * 45 + 220}, 70%, ${50 + index * 5}%)`} />
                             ))}
                           </Pie>
